@@ -562,7 +562,7 @@ The repository records:
 This provides a complete audit trail from Quanty-generated spectra to the final neural-network predictions.
 
 
-# 10. Figure Reproduction
+# Figure Reproduction
 
 All figures reported in the manuscript can be reproduced using the Jupyter notebooks provided in:
 
