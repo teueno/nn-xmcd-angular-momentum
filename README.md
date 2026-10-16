@@ -25,6 +25,8 @@ https://arxiv.org/abs/2607.11058
 
 # Installation
 
+Install Quanty
+
 ## Requirements
 
 - Python 3.10 or newer
@@ -36,6 +38,18 @@ https://arxiv.org/abs/2607.11058
 The code has been tested with CPU execution. For maximum reproducibility, CPU training is recommended.
 
 ---
+
+## Clone repository
+
+```bash
+mkdir -p ~/github_test
+cd ~/github_test
+
+git clone \
+https://github.com/teueno/nn-xmcd-angular-momentum.git
+
+cd nn-xmcd-angular-momentum
+```
 
 ## Create a Python environment
 
@@ -57,12 +71,6 @@ source .venv/bin/activate
 ---
 
 ## Install dependencies
-
-### CPU version of PyTorch
-
-```bash
-pip install torch numpy pandas
-```
 
 ### Using requirements.txt
 
@@ -94,30 +102,73 @@ configs/
     ├── Co_d7.json
     └── Ni_d8.json
 
-src/
-├── __init__.py
-├── utils.py
-├── prepare_dataset.py
-├── split_dataset.py
-├── audit_dataset.py
-├── preprocess.py
-├── data_loader.py
-├── model.py
-├── train.py
-├── metrics.py
-└── evaluate.py
-
-quanty/
-└── runs/
-
 data/
 ├── processed/
 ├── splits/
 └── preprocessed/
 
-models/
+figures/
+├── Figure2_XAS_XMCD_multi_element.pdf
+├── Figure2_XAS_XMCD_multi_element.png
+├── Figure3_Sz_Lz_multi.pdf
+├── Figure3_Sz_Lz_multi.png
+├── Figure3_Sz_Lz_multi.pdf
+├── Figure3_Sz_Lz_multi.png
+├── Figure5_learning_curves.pdf
+└── Figure5_learning_curves.png
+
+models
+├── Fe_d6/
+│   ├── best_model.pt
+│   ├── final_model.pt
+│   ├── selected_model.pt
+│   └── training_config.json
+│
+├── Co_d7/
+└── Ni_d8/
+
+notebooks/
+├── figure_2_xas_and_xmcd.ipynb
+├── figure_3_parameter_dependences_of_sz_and_lz.ipynb
+├── figure_4_parity_plots.ipynb
+└── figure_5_learning_curve.ipynb
+
+quanty/
+├── configs/
+├── runs/
+├── templates/
+└── run_quanty.py
 
 results/
+├── audit/
+├── Fe_d6/
+├── Co_d7/
+└── Ni_d8/
+
+src/
+├── __init__.py
+├── audit_dataset.py
+├── data_loader.py
+├── evaluate.py
+├── metrics.py
+├── model.py
+├── prepare_dataset.py
+├── preprocess.py
+├── split_dataset.py
+├── train.py
+└── utils.py
+
+.gitignore
+
+CITATION.cff
+
+environment.yml
+
+LICENSE
+
+README.md
+
+requirements.txt
 ```
 
 ---
@@ -149,18 +200,21 @@ evaluate.py
 Run Quanty calculations and collect synthetic XAS/XMCD spectra.
 
 ```bash
-python quanty/run_quanty.py \
-  --config quanty/configs/Fe_d6.json
+python quanty/run_quanty.py --config quanty/configs/Fe_d6.json
 ```
 
 Output:
 
 ```text
+quanty/runs/Fe_d6/logs/
+quanty/runs/Fe_d6/lua/
+quanty/runs/Fe_d6/metadata/
 quanty/runs/Fe_d6/spec/
+quanty/runs/Fe_d6/status/
 quanty/runs/quanty_results_Fe_d6.csv
 ```
 
-The same workflow applies to:
+In the following, the same workflow applies to:
 
 ```text
 Co_d7
@@ -174,8 +228,7 @@ Ni_d8
 Create the machine-learning dataset from Quanty outputs.
 
 ```bash
-python src/prepare_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/prepare_dataset.py --config configs/dataset/Fe_d6.json
 ```
 
 Output:
@@ -196,8 +249,7 @@ data/processed/
 Generate fixed train, validation, and test subsets.
 
 ```bash
-python src/split_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/split_dataset.py --config configs/dataset/Fe_d6.json
 ```
 
 Output:
@@ -229,8 +281,7 @@ Check for:
 - identical spectra with inconsistent labels
 
 ```bash
-python src/audit_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/audit_dataset.py --config configs/dataset/Fe_d6.json
 ```
 
 Output:
@@ -256,8 +307,7 @@ Input spectra are standardized independently at each energy channel using statis
 Target variables (`Sz`, `Lz`) are also standardized using the training subset only.
 
 ```bash
-python src/preprocess.py \
-  --config configs/dataset/Fe_d6.json
+python src/preprocess.py --config configs/dataset/Fe_d6.json
 ```
 
 Output:
@@ -276,8 +326,7 @@ data/preprocessed/
 Optional validation step.
 
 ```bash
-python src/data_loader.py \
-  --config configs/training/Fe_d6.json
+python src/data_loader.py --config configs/training/Fe_d6.json
 ```
 
 Typical output:
@@ -314,8 +363,7 @@ Model self-test completed successfully.
 # 8. Train the Neural Network
 
 ```bash
-python src/train.py \
-  --config configs/training/Fe_d6.json
+python src/train.py --config configs/training/Fe_d6.json
 ```
 
 Output:
@@ -345,8 +393,7 @@ Notes:
 # 9. Evaluate the Trained Model
 
 ```bash
-python src/evaluate.py \
-  --config configs/training/Fe_d6.json
+python src/evaluate.py --config configs/training/Fe_d6.json
 ```
 
 Output:
@@ -432,23 +479,17 @@ Additional metadata columns from `*_accepted.csv` are automatically merged when 
 For Fe:
 
 ```bash
-python src/prepare_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/prepare_dataset.py --config configs/dataset/Fe_d6.json
 
-python src/split_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/split_dataset.py --config configs/dataset/Fe_d6.json
 
-python src/audit_dataset.py \
-  --config configs/dataset/Fe_d6.json
+python src/audit_dataset.py --config configs/dataset/Fe_d6.json
 
-python src/preprocess.py \
-  --config configs/dataset/Fe_d6.json
+python src/preprocess.py --config configs/dataset/Fe_d6.json
 
-python src/train.py \
-  --config configs/training/Fe_d6.json
+python src/train.py --config configs/training/Fe_d6.json
 
-python src/evaluate.py \
-  --config configs/training/Fe_d6.json
+python src/evaluate.py --config configs/training/Fe_d6.json
 ```
 
 Replace `Fe_d6` with:
@@ -473,9 +514,7 @@ All processing scripts support:
 Example:
 
 ```bash
-python src/train.py \
-  --config configs/training/Fe_d6.json \
-  --overwrite
+python src/train.py --config configs/training/Fe_d6.json --overwrite
 ```
 
 ---
@@ -492,3 +531,60 @@ The repository records:
 - SHA-256 hashes of inputs and outputs
 
 This provides a complete audit trail from Quanty-generated spectra to the final neural-network predictions.
+
+
+# 10. Figure Reproduction
+
+All figures reported in the manuscript can be reproduced using the Jupyter notebooks provided in:
+
+```text
+notebooks/
+```
+
+The following notebooks generate the figures used in the paper:
+
+| Figure | Notebook |
+|----------|----------|
+| Figure 2 | `figure_2_xas_and_xmcd.ipynb` |
+| Figure 3 | `figure_3_parameter_dependences_of_sz_and_lz.ipynb` |
+| Figure 4 | `figure_4_parity_plots.ipynb` |
+| Figure 5 | `figure_5_learning_curves.ipynb` |
+
+The notebooks use the outputs generated by the training and evaluation workflow, including:
+
+```text
+results/
+├── Fe_d6/
+├── Co_d7/
+└── Ni_d8/
+```
+
+Generated figures are written to:
+
+```text
+figures/
+```
+
+as both PNG and PDF files.
+
+## Figure generation workflow
+
+The figures should be generated after the complete machine-learning workflow has finished:
+
+```text
+prepare_dataset.py
+↓
+split_dataset.py
+↓
+audit_dataset.py
+↓
+preprocess.py
+↓
+train.py
+↓
+evaluate.py
+↓
+Jupyter notebooks
+```
+
+The notebooks read the saved outputs from `results/` and reproduce the manuscript figures directly from the evaluation results
