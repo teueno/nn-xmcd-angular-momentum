@@ -1,0 +1,64 @@
+cff-version: 1.2.0
+
+message: >-
+  If you use this software, datasets, trained models, or results in your
+  research, please cite both the software repository and the associated
+  research article.
+
+title: Neural-network analysis of XAS and XMCD spectra for spin and orbital angular momentum prediction
+
+type: software
+
+authors:
+  - family-names: Ueno
+    given-names: Tetsuro
+
+version: 1.0.0
+
+date-released: 2026-10-15
+
+license: MIT
+
+repository-code: https://github.com/teueno/nn-xmcd-angular-momentum
+
+url: https://github.com/teueno/nn-xmcd-angular-momentum
+
+keywords:
+  - X-ray absorption spectroscopy
+  - XAS
+  - X-ray magnetic circular dichroism
+  - XMCD
+  - machine learning
+  - neural network
+  - spin angular momentum
+  - orbital angular momentum
+  - Quanty
+
+abstract: >-
+  This software provides a reproducible workflow for preparing,
+  auditing, splitting, preprocessing, training, and evaluating
+  neural-network models that simultaneously predict spin and orbital
+  angular momentum from simulated XAS and XMCD spectra. The workflow
+  supports Fe d6, Co d7, and Ni d8 systems and records fixed data
+  splits, preprocessing statistics, training histories, evaluation
+  metrics, predictions, file hashes, and software-version metadata.
+
+preferred-citation:
+  type: article
+
+  title: >-
+    Neural-network-based reconstruction of spin and orbital angular momentum from X-ray magnetic circular dichroism spectra
+
+  authors:
+    - family-names: Ueno
+      given-names: Tetsuro
+
+  journal: arXiv
+
+  year: 2026
+
+  archive: arXiv
+
+  identifier: arXiv:2607.11058
+
+  url: https://arxiv.org/abs/2607.11058

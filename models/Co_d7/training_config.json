@@ -1,0 +1,84 @@
+{
+  "model": {
+    "bias_initialization": "zeros",
+    "class_name": "MultiOutputNN",
+    "dropout_rate": 0.1,
+    "hidden_units": [
+      256,
+      128
+    ],
+    "initialize_weights": true,
+    "output_names": [
+      "Sz",
+      "Lz"
+    ],
+    "use_batch_normalization": true,
+    "weight_initialization": "kaiming_normal"
+  },
+  "paths": {
+    "accepted_metadata_csv": "../../data/processed/Co_d7_accepted.csv",
+    "model_output_directory": "../../models/Co_d7",
+    "preprocessed_dataset_npz": "../../data/preprocessed/Co_d7_preprocessed.npz",
+    "repository_root": "../..",
+    "result_output_directory": "../../results/Co_d7",
+    "scalers_npz": "../../data/preprocessed/Co_d7_scalers.npz",
+    "selected_model_checkpoint": "../../models/Co_d7/selected_model.pt"
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  },
+  "training": {
+    "checkpoint": {
+      "filename": "best_model.pt",
+      "save_best": true
+    },
+    "cpu_threads": {
+      "interop_threads": "auto",
+      "num_threads": "auto",
+      "warn_on_oversubscription": true
+    },
+    "data_loader": {
+      "drop_last_evaluation": false,
+      "drop_last_training": true,
+      "evaluation_batch_size": 64,
+      "num_workers": 0,
+      "pin_memory": "auto",
+      "shuffle_training": true,
+      "train_batch_size": 32
+    },
+    "deterministic_algorithms": true,
+    "device": "cpu",
+    "dtype": "float32",
+    "early_stopping": {
+      "enabled": true,
+      "minimum_delta": 0.0,
+      "mode": "min",
+      "monitor": "validation_loss",
+      "patience": 30,
+      "restore_best_weights": true
+    },
+    "gradient_clip_norm": 1.0,
+    "loss": {
+      "batch_reduction": "mean",
+      "name": "mse",
+      "output_reduction": "mean",
+      "space": "standardized_target_space",
+      "target_weights": [
+        1.0,
+        1.0
+      ]
+    },
+    "maximum_epochs": 300,
+    "optimizer": {
+      "beta1": 0.9,
+      "beta2": 0.999,
+      "epsilon": 1e-08,
+      "learning_rate": 2e-05,
+      "name": "adam",
+      "weight_decay": 0.0
+    },
+    "random_seed": 1234
+  }
+}

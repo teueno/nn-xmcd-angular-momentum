@@ -1,0 +1,64 @@
+{
+  "batch_normalization_mode": "evaluation",
+  "checkpoint_epoch": 63,
+  "checkpoint_validation_loss": 0.003075048465419699,
+  "created_at_utc": "2026-10-15T05:49:39.553886+00:00",
+  "device": "cpu",
+  "dropout_active": false,
+  "dtype": "float32",
+  "evaluation_subset": "complete saved test subset",
+  "files": {
+    "accepted_metadata": "data/processed/Co_d7_accepted.csv",
+    "config": "configs/training/Co_d7.json",
+    "evaluation_summary_json": "results/Co_d7/evaluation_summary.json",
+    "metrics_json": "results/Co_d7/metrics.json",
+    "predictions_csv": "results/Co_d7/predictions.csv",
+    "preprocessed_dataset": "data/preprocessed/Co_d7_preprocessed.npz",
+    "residual_summary_csv": "results/Co_d7/residual_summary.csv",
+    "scaler": "data/preprocessed/Co_d7_scalers.npz",
+    "selected_checkpoint": "models/Co_d7/selected_model.pt"
+  },
+  "inverse_transform": "Y_physical = Y_standardized * Y_std_safe + Y_mean",
+  "metric_definitions": {
+    "nrmse": "RMSE/std_population(y_true)",
+    "r2": "1 - SSE/SST",
+    "residual": "y_pred - y_true",
+    "sse": "sum((y_pred-y_true)^2)",
+    "sst": "sum((y_true-mean(y_true))^2)"
+  },
+  "metrics_calculated_from": "results/Co_d7/predictions.csv",
+  "model_mode": "evaluation",
+  "prediction_count": 486,
+  "sha256": {
+    "config": "a18dcba45564c7f0e1ecf4878ee9a7c4318b591e3444c48b1fefe6ae6a09d0d4",
+    "metrics_json": "76ff0cab82ede3853ca398705fc1fc308b5e9cd7a9e395bbb299e7da327eaaac",
+    "predictions_csv": "3f2a61155eabcf9682b746748b52b72c49c7f56239726cbfcf09126d1ed62e02",
+    "preprocessed_dataset": "a1ec048dd4756421fd1f0c96571fa2e5fcc5aef3315597f8b7204c4fbbf4c5e6",
+    "residual_summary_csv": "c4ae304f349e7c8afb09e7fabcf86391f7d8cd5eef5fd3bbe50d70a337e9c2aa",
+    "scaler": "8ef907000a342a4acec34458aceb06964180c6ae78216f44a1e9deef7c1f57cb",
+    "selected_checkpoint": "577be2f66f43b2c44b5cf0d6ee82b557ee5e4a6682a8a5293d5626d3f16a6a79"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  },
+  "target_order": [
+    "Sz",
+    "Lz"
+  ]
+}

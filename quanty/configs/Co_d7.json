@@ -1,0 +1,63 @@
+{
+  "system": {
+    "element": "Co",
+    "edge": "L23",
+    "n_electrons_3d": 7
+  },
+
+  "quanty_executable": "/Applications/Quanty",
+  "template_lua": "../templates/template_Co_d7.lua",
+
+  "output_directory": "../runs/Co_d7",
+  "spec_source_directory": "../runs",
+
+  "parameters": {
+    "ten_dq": {
+      "type": "linspace",
+      "start": 0.8,
+      "stop": 1.6,
+      "num": 10
+    },
+
+    "slater": {
+      "type": "linspace",
+      "start": 0.7,
+      "stop": 0.9,
+      "num": 3
+    },
+
+    "soc_2p": {
+      "type": "linspace",
+      "start": 0.9,
+      "stop": 1.1,
+      "num": 3
+    },
+
+    "soc_3d": {
+      "type": "linspace",
+      "start": 0.7,
+      "stop": 1.3,
+      "num": 6
+    },
+
+    "h_ex": {
+      "type": "linspace",
+      "start": 0.0,
+      "stop": 0.01,
+      "num": 7
+    }
+  },
+
+  "filename_precision": {
+    "ten_dq": 4,
+    "slater": 4,
+    "soc_2p": 4,
+    "soc_3d": 4,
+    "h_ex": 6
+  },
+
+  "scale_slater_3d_from": "slater",
+  "scale_slater_2p3d_from": "slater",
+
+  "expected_minimum_spec_files": 1
+}

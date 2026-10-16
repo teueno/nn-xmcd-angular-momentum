@@ -1,0 +1,79 @@
+{
+  "audit_status": "pass",
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "f503b2920db7cd262ef4c6a4edd524dfa3cd98e7d68aa3a1e3eef61075e968ab",
+  "counts": {
+    "features": 4002,
+    "samples": 3240,
+    "test": 486,
+    "train": 2268,
+    "unique_prefixes": 3240,
+    "unique_sample_ids": 3240,
+    "validation": 486
+  },
+  "created_at_utc": "2026-10-15T05:53:33.604942+00:00",
+  "failure_reasons": [],
+  "input_files": {
+    "accepted_metadata_csv": "data/processed/Ni_d8_accepted.csv",
+    "prepared_dataset_npz": "data/processed/Ni_d8_dataset.npz",
+    "split_csv": "data/splits/Ni_d8_split.csv"
+  },
+  "input_sha256": {
+    "accepted_metadata_csv": "adb5c9986518d23e0ec1c91c4afdc3b71190a402286a428735a71eb4bee720fd",
+    "prepared_dataset_npz": "8eacc3cc533bc759d4c368a1f37373d5da9f8a1993f152c79ade2609300151db",
+    "split_csv": "1bcfdc36bd154e480e2f713ae19ffd6dc257b54cce3919838cfb0f9f9a994163"
+  },
+  "label_consistency": {
+    "exact_input_different_label_groups": 0,
+    "rounded_input_different_label_groups": 0,
+    "tolerance": 1e-12
+  },
+  "output_files": {
+    "duplicate_groups_csv": "results/audit/Ni_d8_duplicate_groups.csv",
+    "summary_json": "results/audit/Ni_d8_audit_summary.json"
+  },
+  "parameter_audit": {
+    "columns": [
+      "TEN_DQ",
+      "SlaterScale",
+      "SOC_2p",
+      "SOC_3d",
+      "H_ex"
+    ],
+    "cross_split_groups": 0,
+    "cross_split_rows": 0,
+    "duplicate_groups": 0,
+    "duplicate_rows": 0,
+    "round_decimals": 12
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "spectrum_audit": {
+    "exact_cross_split_groups": 0,
+    "exact_cross_split_rows": 0,
+    "exact_duplicate_groups": 0,
+    "exact_duplicate_rows": 0,
+    "rounded_cross_split_groups": 0,
+    "rounded_cross_split_rows": 0,
+    "rounded_decimals": 12,
+    "rounded_duplicate_groups": 0,
+    "rounded_duplicate_rows": 0
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  }
+}

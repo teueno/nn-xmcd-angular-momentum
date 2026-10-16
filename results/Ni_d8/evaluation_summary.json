@@ -1,0 +1,64 @@
+{
+  "batch_normalization_mode": "evaluation",
+  "checkpoint_epoch": 129,
+  "checkpoint_validation_loss": 0.0027564460940567065,
+  "created_at_utc": "2026-10-15T05:56:19.016571+00:00",
+  "device": "cpu",
+  "dropout_active": false,
+  "dtype": "float32",
+  "evaluation_subset": "complete saved test subset",
+  "files": {
+    "accepted_metadata": "data/processed/Ni_d8_accepted.csv",
+    "config": "configs/training/Ni_d8.json",
+    "evaluation_summary_json": "results/Ni_d8/evaluation_summary.json",
+    "metrics_json": "results/Ni_d8/metrics.json",
+    "predictions_csv": "results/Ni_d8/predictions.csv",
+    "preprocessed_dataset": "data/preprocessed/Ni_d8_preprocessed.npz",
+    "residual_summary_csv": "results/Ni_d8/residual_summary.csv",
+    "scaler": "data/preprocessed/Ni_d8_scalers.npz",
+    "selected_checkpoint": "models/Ni_d8/selected_model.pt"
+  },
+  "inverse_transform": "Y_physical = Y_standardized * Y_std_safe + Y_mean",
+  "metric_definitions": {
+    "nrmse": "RMSE/std_population(y_true)",
+    "r2": "1 - SSE/SST",
+    "residual": "y_pred - y_true",
+    "sse": "sum((y_pred-y_true)^2)",
+    "sst": "sum((y_true-mean(y_true))^2)"
+  },
+  "metrics_calculated_from": "results/Ni_d8/predictions.csv",
+  "model_mode": "evaluation",
+  "prediction_count": 486,
+  "sha256": {
+    "config": "3f5865ba00b935fa9f0e4839911c281fcb4768e2b2065d6aa8d192e2481c61e8",
+    "metrics_json": "f0d2818d866bf1fb1f48b79472d987e91e0254d7c716662895f84a07dfc4394b",
+    "predictions_csv": "e8a86962ccb0cab57cec95850355c559c3c2dfdb8050cb3ab02f7ae382143d56",
+    "preprocessed_dataset": "5bf5a0030108b16af9895de5208e04efbf7b2127526c12acd77bbc3d055615d4",
+    "residual_summary_csv": "f250ad2fdb4bd5d90e3c78e653b6b893c27a4b81fc6601eb3d4457b63a9177be",
+    "scaler": "6508a457806988ff2bfb068800d5217f4fbda368e15f12d9bd473f6113ec5231",
+    "selected_checkpoint": "fd9261f5fbda5b5a382b66d58a70163117c8a7002b6b70c39eb5d6ab1fdd68c7"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  },
+  "target_order": [
+    "Sz",
+    "Lz"
+  ]
+}
