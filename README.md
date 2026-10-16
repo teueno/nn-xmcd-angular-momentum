@@ -23,6 +23,90 @@ Tetsuro Ueno
 https://arxiv.org/abs/2607.11058
 
 
+## Repository Structure
+
+```text
+configs/
+├── dataset/
+│   ├── Fe_d6.json
+│   ├── Co_d7.json
+│   └── Ni_d8.json
+│
+└── training/
+    ├── Fe_d6.json
+    ├── Co_d7.json
+    └── Ni_d8.json
+
+data/
+├── processed/
+├── splits/
+└── preprocessed/
+
+figures/
+├── Figure2_XAS_XMCD_multi_element.pdf
+├── Figure2_XAS_XMCD_multi_element.png
+├── Figure3_Sz_Lz_multi.pdf
+├── Figure3_Sz_Lz_multi.png
+├── Figure3_Sz_Lz_multi.pdf
+├── Figure3_Sz_Lz_multi.png
+├── Figure5_learning_curves.pdf
+└── Figure5_learning_curves.png
+
+models
+├── Fe_d6/
+│   ├── best_model.pt
+│   ├── final_model.pt
+│   ├── selected_model.pt
+│   └── training_config.json
+│
+├── Co_d7/
+└── Ni_d8/
+
+notebooks/
+├── figure_2_xas_and_xmcd.ipynb
+├── figure_3_parameter_dependences_of_sz_and_lz.ipynb
+├── figure_4_parity_plots.ipynb
+└── figure_5_learning_curve.ipynb
+
+quanty/
+├── configs/
+├── runs/
+├── templates/
+└── run_quanty.py
+
+results/
+├── audit/
+├── Fe_d6/
+├── Co_d7/
+└── Ni_d8/
+
+src/
+├── __init__.py
+├── audit_dataset.py
+├── data_loader.py
+├── evaluate.py
+├── metrics.py
+├── model.py
+├── prepare_dataset.py
+├── preprocess.py
+├── split_dataset.py
+├── train.py
+└── utils.py
+
+.gitignore
+
+CITATION.cff
+
+environment.yml
+
+LICENSE
+
+README.md
+
+requirements.txt
+```
+
+
 ## Data Availability
 
 To keep the GitHub repository lightweight and maintainable, several large files are not included in the repository.
@@ -116,90 +200,7 @@ python -c "import torch, numpy, pandas; print(torch.__version__)"
 
 ---
 
-# Repository Structure
 
-```text
-configs/
-├── dataset/
-│   ├── Fe_d6.json
-│   ├── Co_d7.json
-│   └── Ni_d8.json
-│
-└── training/
-    ├── Fe_d6.json
-    ├── Co_d7.json
-    └── Ni_d8.json
-
-data/
-├── processed/
-├── splits/
-└── preprocessed/
-
-figures/
-├── Figure2_XAS_XMCD_multi_element.pdf
-├── Figure2_XAS_XMCD_multi_element.png
-├── Figure3_Sz_Lz_multi.pdf
-├── Figure3_Sz_Lz_multi.png
-├── Figure3_Sz_Lz_multi.pdf
-├── Figure3_Sz_Lz_multi.png
-├── Figure5_learning_curves.pdf
-└── Figure5_learning_curves.png
-
-models
-├── Fe_d6/
-│   ├── best_model.pt
-│   ├── final_model.pt
-│   ├── selected_model.pt
-│   └── training_config.json
-│
-├── Co_d7/
-└── Ni_d8/
-
-notebooks/
-├── figure_2_xas_and_xmcd.ipynb
-├── figure_3_parameter_dependences_of_sz_and_lz.ipynb
-├── figure_4_parity_plots.ipynb
-└── figure_5_learning_curve.ipynb
-
-quanty/
-├── configs/
-├── runs/
-├── templates/
-└── run_quanty.py
-
-results/
-├── audit/
-├── Fe_d6/
-├── Co_d7/
-└── Ni_d8/
-
-src/
-├── __init__.py
-├── audit_dataset.py
-├── data_loader.py
-├── evaluate.py
-├── metrics.py
-├── model.py
-├── prepare_dataset.py
-├── preprocess.py
-├── split_dataset.py
-├── train.py
-└── utils.py
-
-.gitignore
-
-CITATION.cff
-
-environment.yml
-
-LICENSE
-
-README.md
-
-requirements.txt
-```
-
----
 
 # Workflow
 
