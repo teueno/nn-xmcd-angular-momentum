@@ -25,8 +25,6 @@ https://arxiv.org/abs/2607.11058
 
 # Installation
 
-Install Quanty
-
 ## Requirements
 
 - Python 3.10 or newer
@@ -34,6 +32,7 @@ Install Quanty
 - pandas
 - PyTorch
 - Git
+- Quanty (see https://www.quanty.org for installation instructions)
 
 The code has been tested with CPU execution. For maximum reproducibility, CPU training is recommended.
 
