@@ -1,0 +1,33 @@
+name: xmcd_nn
+
+channels:
+  - pytorch
+  - conda-forge
+
+dependencies:
+  # Python
+  - python=3.11
+
+  # Numerical and tabular data
+  - numpy
+  - pandas
+  - scipy
+
+  # Machine learning
+  - pytorch
+
+  # Visualization
+  - matplotlib
+
+  # Jupyter Notebook
+  - jupyter
+  - notebook
+  - jupyterlab
+  - ipykernel
+  - nbconvert
+
+  # Testing
+  - pytest
+
+  # Package management
+  - pip

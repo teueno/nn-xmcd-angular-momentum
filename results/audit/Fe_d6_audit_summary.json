@@ -1,0 +1,79 @@
+{
+  "audit_status": "pass",
+  "config_file": "configs/dataset/Fe_d6.json",
+  "config_sha256": "799f69def69b7b1953a43198519fc9145507e070cd06180fd9f2dd18bf3f908d",
+  "counts": {
+    "features": 4002,
+    "samples": 3240,
+    "test": 486,
+    "train": 2268,
+    "unique_prefixes": 3240,
+    "unique_sample_ids": 3240,
+    "validation": 486
+  },
+  "created_at_utc": "2026-10-15T07:19:52.051667+00:00",
+  "failure_reasons": [],
+  "input_files": {
+    "accepted_metadata_csv": "data/processed/Fe_d6_accepted.csv",
+    "prepared_dataset_npz": "data/processed/Fe_d6_dataset.npz",
+    "split_csv": "data/splits/Fe_d6_split.csv"
+  },
+  "input_sha256": {
+    "accepted_metadata_csv": "8fcec7294e8744d57ac439c32fd8dd9e6360ad52d6bc91de93f66c2cde5be5f7",
+    "prepared_dataset_npz": "640c3dcb9482448074a7a2ed36c919a18678533315dc4e589502f161f2aba0ae",
+    "split_csv": "f4fbeb0c349c137e58b28ceef54e6c3a8e0f17bd6720af93a9bcdb5d03e115f2"
+  },
+  "label_consistency": {
+    "exact_input_different_label_groups": 0,
+    "rounded_input_different_label_groups": 0,
+    "tolerance": 1e-12
+  },
+  "output_files": {
+    "duplicate_groups_csv": "results/audit/Fe_d6_duplicate_groups.csv",
+    "summary_json": "results/audit/Fe_d6_audit_summary.json"
+  },
+  "parameter_audit": {
+    "columns": [
+      "TEN_DQ",
+      "SlaterScale",
+      "SOC_2p",
+      "SOC_3d",
+      "H_ex"
+    ],
+    "cross_split_groups": 0,
+    "cross_split_rows": 0,
+    "duplicate_groups": 0,
+    "duplicate_rows": 0,
+    "round_decimals": 12
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "spectrum_audit": {
+    "exact_cross_split_groups": 0,
+    "exact_cross_split_rows": 0,
+    "exact_duplicate_groups": 0,
+    "exact_duplicate_rows": 0,
+    "rounded_cross_split_groups": 0,
+    "rounded_cross_split_rows": 0,
+    "rounded_decimals": 12,
+    "rounded_duplicate_groups": 0,
+    "rounded_duplicate_rows": 0
+  },
+  "system": {
+    "element": "Fe",
+    "n_electrons_3d": 6,
+    "name": "Fe_d6"
+  }
+}

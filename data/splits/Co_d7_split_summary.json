@@ -1,0 +1,127 @@
+{
+  "accepted_metadata_csv": "data/processed/Co_d7_accepted.csv",
+  "accepted_metadata_sha256": "d2c36a951e82a62d2a9941f94c654f09d13755202854988399662419533aa53b",
+  "config_file": "configs/dataset/Co_d7.json",
+  "config_sha256": "175a804ce545af9565060550a916755596d32fd31cfd62c9775d3ff11df4f701",
+  "counts": {
+    "test": 486,
+    "total": 3240,
+    "train": 2268,
+    "validation": 486
+  },
+  "created_at_utc": "2026-10-15T05:45:37.380499+00:00",
+  "integrity_checks": {
+    "complete_dataset_coverage": true,
+    "cross_subset_sample_id_overlap": {
+      "train_test": 0,
+      "train_validation": 0,
+      "validation_test": 0
+    },
+    "duplicate_prefix_rows": 0,
+    "duplicate_sample_id_rows": 0,
+    "unique_dataset_indices": true,
+    "unique_sample_ids": true
+  },
+  "output_files": {
+    "split_csv": "data/splits/Co_d7_split.csv",
+    "split_indices_npz": "data/splits/Co_d7_split_indices.npz",
+    "summary_json": "data/splits/Co_d7_split_summary.json"
+  },
+  "output_sha256": {
+    "split_csv": "e53573f2b3c9ac26f724cf4495e5bde0519c3a3d294d436214e89e447588b37d",
+    "split_indices_npz": "5d754bbbed34d3fe6b4a70e80ba64754404ca5306885e2149d827c2ce34edd77"
+  },
+  "prepared_dataset_npz": "data/processed/Co_d7_dataset.npz",
+  "prepared_dataset_sha256": "887a60372c8f5de6b52a58d643a17e5bd0b916f7ae2273f0033ccd3d956c9f6f",
+  "random_number_generator": "numpy.random.default_rng",
+  "random_seed": 1234,
+  "ratios": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "rounding_rule": {
+    "test": "N - n_train - n_validation",
+    "train": "int(train_ratio * N)",
+    "validation": "int(validation_ratio * N)"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "split_method": "random permutation without replacement",
+  "subsets": {
+    "test": {
+      "count": 486,
+      "targets": {
+        "lz_label": {
+          "count": 486,
+          "max": -0.53809,
+          "mean": -0.7530823888888888,
+          "min": -0.992349,
+          "std_population": 0.11082938666510231
+        },
+        "sz_label": {
+          "count": 486,
+          "max": -0.794312,
+          "mean": -0.95918679218107,
+          "min": -1.114024,
+          "std_population": 0.08225631158134371
+        }
+      }
+    },
+    "train": {
+      "count": 2268,
+      "targets": {
+        "lz_label": {
+          "count": 2268,
+          "max": -0.53809,
+          "mean": -0.7503569246031747,
+          "min": -0.992349,
+          "std_population": 0.10759424819148419
+        },
+        "sz_label": {
+          "count": 2268,
+          "max": -0.794263,
+          "mean": -0.9547669938271605,
+          "min": -1.118967,
+          "std_population": 0.0824651358198034
+        }
+      }
+    },
+    "validation": {
+      "count": 486,
+      "targets": {
+        "lz_label": {
+          "count": 486,
+          "max": -0.539742,
+          "mean": -0.7461650679012345,
+          "min": -0.992349,
+          "std_population": 0.11229231274445951
+        },
+        "sz_label": {
+          "count": 486,
+          "max": -0.794312,
+          "mean": -0.9523741810699589,
+          "min": -1.114024,
+          "std_population": 0.08619387400957167
+        }
+      }
+    }
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  }
+}

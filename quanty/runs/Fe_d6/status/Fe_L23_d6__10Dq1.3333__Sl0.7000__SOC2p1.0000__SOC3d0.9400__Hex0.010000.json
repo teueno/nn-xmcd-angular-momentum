@@ -1,0 +1,23 @@
+{
+  "completed_at_utc": "2026-10-14T05:01:08.932080+00:00",
+  "elapsed_seconds": 1.965879833092913,
+  "error_message": "",
+  "lua_file": "/Users/tetsuro/Library/CloudStorage/OneDrive-qst.go.jp/プロジェクト/3_メインプロジェクト/PRJ-M-017_R6安全保障技術研究推進制度/機械学習による解析法の開発/python_XMCD_analysis/261014_for_github_upload/quanty/runs/Fe_d6/lua/Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000.lua",
+  "lua_sha256": "a861f64f5305a86a9aa13babdd3c6ba1bba2056da44294976db87b6b62c273a3",
+  "parameters": {
+    "h_ex": 0.01,
+    "slater": 0.7,
+    "soc_2p": 1.0,
+    "soc_3d": 0.94,
+    "ten_dq": 1.3333333333333335
+  },
+  "prefix": "Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000",
+  "return_code": 0,
+  "spec_files": [
+    "Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000_cd.spec",
+    "Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000_k.spec"
+  ],
+  "status": "success",
+  "stderr_file": "/Users/tetsuro/Library/CloudStorage/OneDrive-qst.go.jp/プロジェクト/3_メインプロジェクト/PRJ-M-017_R6安全保障技術研究推進制度/機械学習による解析法の開発/python_XMCD_analysis/261014_for_github_upload/quanty/runs/Fe_d6/logs/Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000.stderr.txt",
+  "stdout_file": "/Users/tetsuro/Library/CloudStorage/OneDrive-qst.go.jp/プロジェクト/3_メインプロジェクト/PRJ-M-017_R6安全保障技術研究推進制度/機械学習による解析法の開発/python_XMCD_analysis/261014_for_github_upload/quanty/runs/Fe_d6/logs/Fe_L23_d6__10Dq1.3333__Sl0.7000__SOC2p1.0000__SOC3d0.9400__Hex0.010000.stdout.txt"
+}

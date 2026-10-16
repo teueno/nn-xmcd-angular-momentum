@@ -1,0 +1,99 @@
+{
+  "accepted_label_summary": {
+    "Lz": {
+      "count": 3240,
+      "max": -0.119809,
+      "mean": -0.2700985842592592,
+      "min": -0.499578,
+      "std_population": 0.08088663291827558
+    },
+    "Sz": {
+      "count": 3240,
+      "max": -0.820318,
+      "mean": -0.9631386324074075,
+      "min": -0.998524,
+      "std_population": 0.058696714434416444
+    }
+  },
+  "arrays": {
+    "X_dtype": "float64",
+    "X_shape": [
+      3240,
+      4002
+    ],
+    "Y_dtype": "float64",
+    "Y_shape": [
+      3240,
+      2
+    ],
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "f503b2920db7cd262ef4c6a4edd524dfa3cd98e7d68aa3a1e3eef61075e968ab",
+  "counts": {
+    "accepted": 3240,
+    "excluded": 540,
+    "source_rows": 3780
+  },
+  "created_at_utc": "2026-10-15T05:52:50.393887+00:00",
+  "exclusion_reason_counts": {
+    "both_moments_below_tolerance": 540
+  },
+  "output_files": {
+    "accepted_csv": "data/processed/Ni_d8_accepted.csv",
+    "dataset_npz": "data/processed/Ni_d8_dataset.npz",
+    "excluded_csv": "data/processed/Ni_d8_excluded.csv",
+    "metadata_csv": "data/processed/Ni_d8_metadata.csv",
+    "summary_json": "data/processed/Ni_d8_summary.json"
+  },
+  "output_sha256": {
+    "accepted_csv": "adb5c9986518d23e0ec1c91c4afdc3b71190a402286a428735a71eb4bee720fd",
+    "dataset_npz": "8eacc3cc533bc759d4c368a1f37373d5da9f8a1993f152c79ade2609300151db",
+    "excluded_csv": "59602de12cf7163cfc378b9311cb6171bc9e4ac6371147695f9fddbf714929cc",
+    "metadata_csv": "cb4cc4dcc48594b2876db0819c2d8c26086e372d9390f746470d813f8c039cd7"
+  },
+  "selection": {
+    "criterion": "abs(Sz) < tolerance and abs(Lz) < tolerance",
+    "exclude_both_moments_zero": true,
+    "zero_tolerance": 1e-06
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_results_csv": "quanty/runs/quanty_results_Ni_d8.csv",
+  "source_results_csv_sha256": "59925ec01f0347977c2af1979f5d459521e8f6363ec54e90accd71ace3370615",
+  "spec_directory": "quanty/runs/Ni_d8/spec",
+  "spectrum_settings": {
+    "energy_atol": 1e-12,
+    "energy_column": 0,
+    "energy_rtol": 1e-10,
+    "require_equal_length": true,
+    "require_same_energy_grid": true,
+    "skip_header": 4,
+    "value_column": 2,
+    "xas_suffix": "_k.spec",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  }
+}

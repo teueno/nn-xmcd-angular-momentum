@@ -1,0 +1,272 @@
+{
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "f503b2920db7cd262ef4c6a4edd524dfa3cd98e7d68aa3a1e3eef61075e968ab",
+  "constant_or_near_constant_features": {
+    "targets_below_epsilon": 0,
+    "xas_below_epsilon": 0,
+    "xmcd_below_epsilon": 0
+  },
+  "counts": {
+    "n_total_features": 4002,
+    "n_xas_features": 2001,
+    "n_xmcd_features": 2001,
+    "test": 486,
+    "total": 3240,
+    "train": 2268,
+    "validation": 486
+  },
+  "created_at_utc": "2026-10-15T05:53:56.298616+00:00",
+  "method": {
+    "channel_order": "XAS followed by XMCD",
+    "epsilon": 1e-06,
+    "feature_axis": "energy point within each channel",
+    "fit_statistics_on": "training_only",
+    "input_mode": "channel_wise_feature_standardization",
+    "nonfinite_policy": "error",
+    "population_standard_deviation_ddof": 0,
+    "small_std_replacement": 1.0,
+    "split_seed": 1234,
+    "standardize_inputs": true,
+    "standardize_targets": true,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "nonfinite_replacements": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "output_files": {
+    "preprocessed_npz": "data/preprocessed/Ni_d8_preprocessed.npz",
+    "scalers_npz": "data/preprocessed/Ni_d8_scalers.npz",
+    "summary_json": "data/preprocessed/Ni_d8_preprocess_summary.json"
+  },
+  "output_sha256": {
+    "preprocessed_npz": "5bf5a0030108b16af9895de5208e04efbf7b2127526c12acd77bbc3d055615d4",
+    "scalers_npz": "6508a457806988ff2bfb068800d5217f4fbda368e15f12d9bd473f6113ec5231"
+  },
+  "prepared_dataset_npz": "data/processed/Ni_d8_dataset.npz",
+  "prepared_dataset_sha256": "8eacc3cc533bc759d4c368a1f37373d5da9f8a1993f152c79ade2609300151db",
+  "raw_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 486,
+        "max": -0.119809,
+        "mean": -0.26553226543209874,
+        "min": -0.499517,
+        "std_population": 0.08417305921636133
+      },
+      "Sz": {
+        "count": 486,
+        "max": -0.820582,
+        "mean": -0.9654655041152264,
+        "min": -0.998524,
+        "std_population": 0.056354503413794846
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2268,
+        "max": -0.119809,
+        "mean": -0.2715884029982364,
+        "min": -0.499578,
+        "std_population": 0.08038029662306785
+      },
+      "Sz": {
+        "count": 2268,
+        "max": -0.820318,
+        "mean": -0.963292351851852,
+        "min": -0.998524,
+        "std_population": 0.05862367530468329
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 486,
+        "max": -0.119809,
+        "mean": -0.26771241563786,
+        "min": -0.499578,
+        "std_population": 0.07965140251413794
+      },
+      "Sz": {
+        "count": 486,
+        "max": -0.820582,
+        "mean": -0.960094403292181,
+        "min": -0.998467,
+        "std_population": 0.06115533623966372
+      }
+    }
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_nonfinite_values": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "split_indices_npz": "data/splits/Ni_d8_split_indices.npz",
+  "split_indices_sha256": "c980c39c936bfff3dcc4a99cc633c4085a947821c60e0128074639232ba72bda",
+  "standardized_array_summary": {
+    "X_test": {
+      "dtype": "float64",
+      "max": 6.039804904028257,
+      "mean": 0.01111640030353577,
+      "min": -7.2275293161282566,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        486,
+        4002
+      ],
+      "std_population": 0.983600633620344
+    },
+    "X_train": {
+      "dtype": "float64",
+      "max": 5.98365742032584,
+      "mean": 1.4188722412498186e-16,
+      "min": -8.152558183670482,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2268,
+        4002
+      ],
+      "std_population": 1.0
+    },
+    "X_validation": {
+      "dtype": "float64",
+      "max": 6.011943561011099,
+      "mean": 0.007956905703666016,
+      "min": -7.981821931994772,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        486,
+        4002
+      ],
+      "std_population": 0.9975693459062881
+    },
+    "Y_test": {
+      "dtype": "float64",
+      "max": 2.4343467227216156,
+      "mean": 0.019137012683228642,
+      "min": -2.835627716959077,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        486,
+        2
+      ],
+      "std_population": 1.0067270372201989
+    },
+    "Y_train": {
+      "dtype": "float64",
+      "max": 2.4388500227727974,
+      "mean": 3.544098191484186e-15,
+      "min": -2.8363866094061416,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2268,
+        2
+      ],
+      "std_population": 0.9999999999999996
+    },
+    "Y_validation": {
+      "dtype": "float64",
+      "max": 2.4343467227216156,
+      "mean": 0.05138553853989522,
+      "min": -2.8363866094061416,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        486,
+        2
+      ],
+      "std_population": 1.0173988845082873
+    }
+  },
+  "standardized_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 486,
+        "max": 1.8882662713971425,
+        "mean": 0.07534355831675156,
+        "min": -2.835627716959077,
+        "std_population": 1.0471852276320788
+      },
+      "Sz": {
+        "count": 486,
+        "max": 2.4343467227216156,
+        "mean": -0.0370695329502943,
+        "min": -0.6009798595028271,
+        "std_population": 0.9612925685894824
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2268,
+        "max": 1.8882662713971425,
+        "mean": 4.167546182737536e-15,
+        "min": -2.8363866094061416,
+        "std_population": 0.9999999999999999
+      },
+      "Sz": {
+        "count": 2268,
+        "max": 2.4388500227727974,
+        "mean": 2.92769923530782e-15,
+        "min": -0.6009798595028271,
+        "std_population": 0.9999999999999992
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 486,
+        "max": 1.8882662713971425,
+        "mean": 0.048220615290243136,
+        "min": -2.8363866094061416,
+        "std_population": 0.9909319305905532
+      },
+      "Sz": {
+        "count": 486,
+        "max": 2.4343467227216156,
+        "mean": 0.05455046178954728,
+        "min": -0.6000075560826862,
+        "std_population": 1.0431849576442052
+      }
+    }
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  },
+  "training_transform_checks": {
+    "maximum_absolute_training_feature_mean": 3.4763295514801705e-14,
+    "training_target_mean": [
+      2.9379790781284234e-15,
+      4.16788884416489e-15
+    ],
+    "training_target_std_population": [
+      0.9999999999999994,
+      1.0000000000000002
+    ]
+  }
+}

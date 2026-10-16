@@ -1,0 +1,127 @@
+{
+  "accepted_metadata_csv": "data/processed/Ni_d8_accepted.csv",
+  "accepted_metadata_sha256": "adb5c9986518d23e0ec1c91c4afdc3b71190a402286a428735a71eb4bee720fd",
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "f503b2920db7cd262ef4c6a4edd524dfa3cd98e7d68aa3a1e3eef61075e968ab",
+  "counts": {
+    "test": 486,
+    "total": 3240,
+    "train": 2268,
+    "validation": 486
+  },
+  "created_at_utc": "2026-10-15T05:53:14.247266+00:00",
+  "integrity_checks": {
+    "complete_dataset_coverage": true,
+    "cross_subset_sample_id_overlap": {
+      "train_test": 0,
+      "train_validation": 0,
+      "validation_test": 0
+    },
+    "duplicate_prefix_rows": 0,
+    "duplicate_sample_id_rows": 0,
+    "unique_dataset_indices": true,
+    "unique_sample_ids": true
+  },
+  "output_files": {
+    "split_csv": "data/splits/Ni_d8_split.csv",
+    "split_indices_npz": "data/splits/Ni_d8_split_indices.npz",
+    "summary_json": "data/splits/Ni_d8_split_summary.json"
+  },
+  "output_sha256": {
+    "split_csv": "1bcfdc36bd154e480e2f713ae19ffd6dc257b54cce3919838cfb0f9f9a994163",
+    "split_indices_npz": "c980c39c936bfff3dcc4a99cc633c4085a947821c60e0128074639232ba72bda"
+  },
+  "prepared_dataset_npz": "data/processed/Ni_d8_dataset.npz",
+  "prepared_dataset_sha256": "8eacc3cc533bc759d4c368a1f37373d5da9f8a1993f152c79ade2609300151db",
+  "random_number_generator": "numpy.random.default_rng",
+  "random_seed": 1234,
+  "ratios": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "rounding_rule": {
+    "test": "N - n_train - n_validation",
+    "train": "int(train_ratio * N)",
+    "validation": "int(validation_ratio * N)"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": "12.4",
+    "cudnn_available": true,
+    "cudnn_version": 90100,
+    "machine": "x86_64",
+    "mps_available": false,
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "split_method": "random permutation without replacement",
+  "subsets": {
+    "test": {
+      "count": 486,
+      "targets": {
+        "lz_label": {
+          "count": 486,
+          "max": -0.119809,
+          "mean": -0.26553226543209874,
+          "min": -0.499517,
+          "std_population": 0.08417305921636131
+        },
+        "sz_label": {
+          "count": 486,
+          "max": -0.820582,
+          "mean": -0.9654655041152265,
+          "min": -0.998524,
+          "std_population": 0.056354503413794846
+        }
+      }
+    },
+    "train": {
+      "count": 2268,
+      "targets": {
+        "lz_label": {
+          "count": 2268,
+          "max": -0.119809,
+          "mean": -0.27158840299823633,
+          "min": -0.499578,
+          "std_population": 0.08038029662306785
+        },
+        "sz_label": {
+          "count": 2268,
+          "max": -0.820318,
+          "mean": -0.9632923518518518,
+          "min": -0.998524,
+          "std_population": 0.0586236753046833
+        }
+      }
+    },
+    "validation": {
+      "count": 486,
+      "targets": {
+        "lz_label": {
+          "count": 486,
+          "max": -0.119809,
+          "mean": -0.26771241563786,
+          "min": -0.499578,
+          "std_population": 0.07965140251413795
+        },
+        "sz_label": {
+          "count": 486,
+          "max": -0.820582,
+          "mean": -0.960094403292181,
+          "min": -0.998467,
+          "std_population": 0.061155336239663724
+        }
+      }
+    }
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  }
+}

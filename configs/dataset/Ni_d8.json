@@ -1,0 +1,109 @@
+{
+  "system": {
+    "name": "Ni_d8",
+    "element": "Ni",
+    "n_electrons_3d": 8
+  },
+
+  "paths": {
+    "repository_root": "../..",
+
+    "spec_directory": "../../quanty/runs/Ni_d8/spec",
+
+    "quanty_results_csv": "../../quanty/runs/quanty_results_Ni_d8.csv",
+
+    "output_directory": "../../data/processed",
+
+    "prepared_dataset_npz": "../../data/processed/Ni_d8_dataset.npz",
+
+    "accepted_metadata_csv": "../../data/processed/Ni_d8_accepted.csv",
+
+    "split_output_directory": "../../data/splits",
+
+    "split_indices_npz": "../../data/splits/Ni_d8_split_indices.npz",
+
+    "split_csv": "../../data/splits/Ni_d8_split.csv",
+
+    "preprocess_output_directory": "../../data/preprocessed",
+
+    "preprocessed_dataset_npz": "../../data/preprocessed/Ni_d8_preprocessed.npz",
+
+    "scalers_npz": "../../data/preprocessed/Ni_d8_scalers.npz",
+
+    "audit_output_directory": "../../results/audit"
+  },
+
+  "spectrum": {
+    "xas_suffix": "_k.spec",
+
+    "xmcd_suffix": "_cd.spec",
+
+    "skip_header": 4,
+
+    "energy_column": 0,
+
+    "value_column": 2,
+
+    "require_equal_length": true,
+
+    "require_same_energy_grid": true,
+
+    "energy_rtol": 1e-10,
+
+    "energy_atol": 1e-12
+  },
+
+  "columns": {
+    "prefix": "Prefix",
+
+    "sz": "Sz",
+
+    "lz": "Lz"
+  },
+
+  "exclusion": {
+    "exclude_both_moments_zero": true,
+
+    "zero_tolerance": 1e-6
+  },
+
+  "split": {
+    "train_ratio": 0.70,
+
+    "validation_ratio": 0.15,
+
+    "test_ratio": 0.15,
+
+    "random_seed": 1234
+  },
+
+  "preprocessing": {
+    "input_mode": "channel_wise_feature_standardization",
+
+    "standardize_inputs": true,
+
+    "standardize_targets": true,
+
+    "fit_statistics_on": "training_only",
+
+    "epsilon": 1e-6,
+
+    "nonfinite_policy": "error"
+  },
+
+  "audit": {
+    "parameter_columns": [
+      "TEN_DQ",
+      "SlaterScale",
+      "SOC_2p",
+      "SOC_3d",
+      "H_ex"
+    ],
+
+    "parameter_round_decimals": 12,
+
+    "spectrum_round_decimals": 12,
+
+    "label_tolerance": 1e-12
+  }
+}

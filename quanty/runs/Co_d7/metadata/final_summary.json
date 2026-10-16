@@ -1,0 +1,13 @@
+{
+  "configuration": "/Users/tetsuro/Library/CloudStorage/OneDrive-qst.go.jp/プロジェクト/3_メインプロジェクト/PRJ-M-017_R6安全保障技術研究推進制度/機械学習による解析法の開発/python_XMCD_analysis/261014_for_github_upload/quanty/configs/Co_d7.json",
+  "failed": 0,
+  "finished_at_utc": "2026-10-14T06:47:55.273738+00:00",
+  "skipped": 0,
+  "successful_or_dry_run": 3780,
+  "system": {
+    "edge": "L23",
+    "element": "Co",
+    "n_electrons_3d": 7
+  },
+  "total_parameter_sets": 3780
+}
