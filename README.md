@@ -15,6 +15,14 @@ See the [LICENSE](LICENSE) file for details.
 
 If you use this software, please cite both the software repository and the associated article.
 
+Software DOI
+
+https://doi.org/10.5281/zenodo.23409837
+
+Repository
+
+https://github.com/teueno/nn-xmcd-angular-momentum
+
 The associated manuscript is currently available as:
 
 Tetsuro Ueno

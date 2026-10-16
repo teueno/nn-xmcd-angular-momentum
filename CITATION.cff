@@ -23,6 +23,8 @@ repository-code: https://github.com/teueno/nn-xmcd-angular-momentum
 
 url: https://github.com/teueno/nn-xmcd-angular-momentum
 
+doi: 10.5281/zenodo.23409837
+
 keywords:
   - X-ray absorption spectroscopy
   - XAS
