@@ -109,31 +109,32 @@ requirements.txt
 
 ## Data Availability
 
-To keep the GitHub repository lightweight and maintainable, several large files are not included in the repository.
+To keep the GitHub repository lightweight and maintainable, several large files are not included in this repository.
 
-The following files are excluded from GitHub:
+The following files are excluded via `.gitignore`:
 
 ```text
-quanty/runs/*/*pec/*.spec
+quanty/runs/*/spec/*.spec
 
 data/processed/*.npz
 data/splits/*.npz
 data/preprocessed/*.npz
 
-models/**/*.**
+models/**/*.pt
 models/**/*.pth
 ```
 
-These files*include:
+These files include:
 
-- Quanty-generated XAS/X*CD spectra (`*.spec`)
-- Processed *achine-learning datasets (`*.*pz`)
-- Preprocessed datasets and s*aling parameters (`*.npz`)
-- Train*d neural-network checkpoints*(`*.pt`, `*.pth`)
+- Quanty-generated XAS/XMCD spectra (**.spec`)
+- Processed machine-learning datasets (`*.npz`)
+- Preprocessed datasets and scaling parameters *`*.npz`)
+- Trained neural-network checkpoint* (`*.pt`, `*.pth`)
 
-The source code* configuration files, evaluation r*sults, figure-generation notebooks* and metadata required to reproduc* the workflow are included in this*repository.
+The source code, configuration files, notebooks, valuation results, and metadata required to reproduce the workflow are included in this repository.
 
-Large datasets, train*d models, and other supplementary *aterials will be made available se*arately through Zenodo.
+Large datasets, spectra, and trained models will be archived separately through Zenodo.
+```
 
 
 # Installation
