@@ -141,7 +141,7 @@ These files include:
 
 The source code, configuration files, notebooks, valuation results, and metadata required to reproduce the workflow are included in this repository.
 
-Large datasets, spectra, and trained models will be archived separately through Zenodo.
+Large datasets, spectra, and trained models are archived separately through Zenodo (https://doi.org/10.5281/zenodo.23409837).
 
 
 # Installation
