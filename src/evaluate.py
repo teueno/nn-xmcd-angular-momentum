@@ -1,63 +1,44 @@
 #!/usr/bin/env python3
 
-"""
-Evaluate the selected checkpoint on the complete saved test subset.
+"""Train MultiOutputNN reproducibly under a fixed external field.
 
-The model predicts standardized target values. Predictions are converted
-back to physical units using the training-subset statistics saved by
-preprocess.py.
+Expected neural-network inputs
+------------------------------
+XAS:
+    (I_r + I_l) / 2
 
-Outputs
--------
-predictions.csv
-    Every test target/prediction pair in standardized and physical units.
+XMCD:
+    I_r - I_l
 
-metrics.json
-    Metrics calculated from exactly the rows saved in predictions.csv.
+The script validates the spectrum definitions stored in the
+preprocessed dataset before training.
 
-residual_summary.csv
-    Physical-unit regression and residual metrics, including SSE, SST,
-    RMSE, NRMSE, bias, R2, and Pearson correlation.
-
-evaluation_summary.json
-    Checkpoint, input files, hashes, software versions, and inference details.
-
-Privacy
--------
-Internal calculations use absolute paths. Paths written to public output
-files and displayed in normal console output are converted to paths relative
-to the repository root.
+The fixed external magnetic field is validated by data_loader.py
+and stored in checkpoints and training summaries. The external
+field is metadata and is not appended to the XAS/XMCD input.
 """
 
 import argparse
+import copy
 import csv
+import os
+import random
+import shutil
+import time
+from numbers import Integral
+from numbers import Real
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
-
-
-# Support both:
-#
-#   python src/evaluate.py
-#
-# and:
-#
-#   python -m src.evaluate
 
 try:
     from .data_loader import (
         build_dataloaders,
+        dataloader_summary,
     )
 
-    from .metrics import (
-        multioutput_regression_metrics,
-    )
-
-    from .model import (
-        build_model,
-    )
+    from .model import build_model
 
     from .utils import (
         check_output_files,
@@ -68,6 +49,7 @@ try:
         public_path,
         resolve_path,
         select_torch_device,
+        set_random_seeds,
         sha256_file,
         software_versions,
         utc_now_iso,
@@ -77,15 +59,10 @@ try:
 except ImportError:
     from data_loader import (
         build_dataloaders,
+        dataloader_summary,
     )
 
-    from metrics import (
-        multioutput_regression_metrics,
-    )
-
-    from model import (
-        build_model,
-    )
+    from model import build_model
 
     from utils import (
         check_output_files,
@@ -96,11 +73,23 @@ except ImportError:
         public_path,
         resolve_path,
         select_torch_device,
+        set_random_seeds,
         sha256_file,
         software_versions,
         utc_now_iso,
         write_json,
     )
+
+
+# ============================================================
+# Constants
+# ============================================================
+
+EXPECTED_XAS_DEFINITION = "(I_r + I_l) / 2"
+
+EXPECTED_XMCD_DEFINITION = "I_r - I_l"
+
+EXPECTED_EXTERNAL_FIELD_IS_MODEL_INPUT = False
 
 
 # ============================================================
@@ -110,8 +99,9 @@ except ImportError:
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description=(
-            "Evaluate the selected model "
-            "on the complete saved test subset."
+            "Train the XAS/XMCD multi-output neural network "
+            "with spectrum-definition and external-field "
+            "validation."
         )
     )
 
@@ -119,33 +109,25 @@ def parse_arguments():
         "--config",
         type=Path,
         required=True,
-        help="Training JSON configuration file.",
     )
 
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Overwrite existing evaluation outputs.",
     )
 
     return parser.parse_args()
 
 
 # ============================================================
-# Public-path utility
+# General utilities
 # ============================================================
 
 def safe_public_path(
     path,
     repository_root,
 ):
-    """
-    Return a public-safe path.
-
-    A path inside the repository is represented relative to the
-    repository root. If it is outside the repository, only the
-    final file name is returned.
-    """
+    """Return a public-safe path."""
 
     if path is None:
         return None
@@ -162,464 +144,1741 @@ def safe_public_path(
         ).name
 
 
+def public_config_copy(
+    config,
+):
+    """Return a deep copy of the configuration."""
+
+    return copy.deepcopy(
+        config
+    )
+
+
+def normalize_definition(
+    value,
+):
+    """Normalize whitespace in a definition string."""
+
+    return " ".join(
+        str(
+            value
+        ).strip().split()
+    )
+
+
+def read_scalar_string(
+    name,
+    values,
+):
+    """Read one nonempty scalar string from an array."""
+
+    array = np.asarray(
+        values
+    ).reshape(
+        -1
+    )
+
+    if array.size != 1:
+        raise ValueError(
+            f"{name} must contain exactly one value"
+        )
+
+    result = str(
+        array[
+            0
+        ]
+    ).strip()
+
+    if not result:
+        raise ValueError(
+            f"{name} must not be empty"
+        )
+
+    return result
+
+
+def read_scalar_boolean(
+    name,
+    values,
+):
+    """Read one scalar Boolean from an array."""
+
+    array = np.asarray(
+        values
+    ).reshape(
+        -1
+    )
+
+    if array.size != 1:
+        raise ValueError(
+            f"{name} must contain exactly one value"
+        )
+
+    value = array[
+        0
+    ]
+
+    if isinstance(
+        value,
+        (
+            bool,
+            np.bool_,
+        ),
+    ):
+        return bool(
+            value
+        )
+
+    if (
+        isinstance(
+            value,
+            (
+                int,
+                np.integer,
+            ),
+        )
+        and int(
+            value
+        ) in (
+            0,
+            1,
+        )
+    ):
+        return bool(
+            value
+        )
+
+    raise TypeError(
+        f"{name} must contain a Boolean value"
+    )
+
+
+def read_scalar_integer(
+    name,
+    values,
+):
+    """Read one positive scalar integer from an array."""
+
+    array = np.asarray(
+        values
+    ).reshape(
+        -1
+    )
+
+    if array.size != 1:
+        raise ValueError(
+            f"{name} must contain exactly one value"
+        )
+
+    value = int(
+        array[
+            0
+        ]
+    )
+
+    if value <= 0:
+        raise ValueError(
+            f"{name} must be positive"
+        )
+
+    return value
+
+
+def read_scalar_float(
+    name,
+    values,
+):
+    """Read one finite scalar float from an array."""
+
+    array = np.asarray(
+        values
+    ).reshape(
+        -1
+    )
+
+    if array.size != 1:
+        raise ValueError(
+            f"{name} must contain exactly one value"
+        )
+
+    value = float(
+        array[
+            0
+        ]
+    )
+
+    if not np.isfinite(
+        value
+    ):
+        raise ValueError(
+            f"{name} must be finite"
+        )
+
+    return value
+
+
+def normalize_direction(
+    name,
+    direction,
+):
+    """Validate and normalize a three-component direction."""
+
+    direction = np.asarray(
+        direction,
+        dtype=np.float64,
+    ).reshape(
+        -1
+    )
+
+    if direction.shape != (
+        3,
+    ):
+        raise ValueError(
+            f"{name} must contain exactly three values"
+        )
+
+    ensure_finite(
+        name,
+        direction,
+    )
+
+    norm = float(
+        np.linalg.norm(
+            direction
+        )
+    )
+
+    if norm <= 0.0:
+        raise ValueError(
+            f"{name} must be nonzero"
+        )
+
+    return (
+        direction
+        / norm
+    )
+
+
 # ============================================================
-# Checkpoint utilities
+# Numeric validation
 # ============================================================
 
-def load_checkpoint(
-    checkpoint_path,
+def validate_positive_integer(
+    name,
+    value,
+):
+    if (
+        isinstance(
+            value,
+            bool,
+        )
+        or not isinstance(
+            value,
+            Integral,
+        )
+    ):
+        raise TypeError(
+            f"{name} must be an integer, not bool"
+        )
+
+    value = int(
+        value
+    )
+
+    if value <= 0:
+        raise ValueError(
+            f"{name} must be positive"
+        )
+
+    return value
+
+
+def validate_nonnegative_integer(
+    name,
+    value,
+):
+    if (
+        isinstance(
+            value,
+            bool,
+        )
+        or not isinstance(
+            value,
+            Integral,
+        )
+    ):
+        raise TypeError(
+            f"{name} must be an integer, not bool"
+        )
+
+    value = int(
+        value
+    )
+
+    if value < 0:
+        raise ValueError(
+            f"{name} must be nonnegative"
+        )
+
+    return value
+
+
+def validate_positive_float(
+    name,
+    value,
+):
+    if (
+        isinstance(
+            value,
+            bool,
+        )
+        or not isinstance(
+            value,
+            Real,
+        )
+    ):
+        raise TypeError(
+            f"{name} must be numeric, not bool"
+        )
+
+    value = float(
+        value
+    )
+
+    if (
+        not np.isfinite(
+            value
+        )
+        or value <= 0.0
+    ):
+        raise ValueError(
+            f"{name} must be finite and positive"
+        )
+
+    return value
+
+
+def validate_nonnegative_float(
+    name,
+    value,
+):
+    if (
+        isinstance(
+            value,
+            bool,
+        )
+        or not isinstance(
+            value,
+            Real,
+        )
+    ):
+        raise TypeError(
+            f"{name} must be numeric, not bool"
+        )
+
+    value = float(
+        value
+    )
+
+    if (
+        not np.isfinite(
+            value
+        )
+        or value < 0.0
+    ):
+        raise ValueError(
+            f"{name} must be finite and nonnegative"
+        )
+
+    return value
+
+
+def validate_probability_open(
+    name,
+    value,
+):
+    value = validate_positive_float(
+        name,
+        value,
+    )
+
+    if value >= 1.0:
+        raise ValueError(
+            f"{name} must be smaller than 1.0"
+        )
+
+    return value
+
+
+# ============================================================
+# Spectrum configuration
+# ============================================================
+
+def validate_spectrum_config(
+    config,
+):
+    """Validate the XAS/XMCD settings in the JSON config."""
+
+    if "spectrum" not in config:
+        raise ValueError(
+            "Config must contain the spectrum section"
+        )
+
+    spectrum = config[
+        "spectrum"
+    ]
+
+    if not isinstance(
+        spectrum,
+        dict,
+    ):
+        raise TypeError(
+            "spectrum must be a dictionary"
+        )
+
+    required_settings = {
+        "xas_right_suffix",
+        "xas_left_suffix",
+        "xmcd_suffix",
+    }
+
+    missing_settings = (
+        required_settings
+        - set(
+            spectrum
+        )
+    )
+
+    if missing_settings:
+        raise ValueError(
+            "Missing spectrum settings: "
+            f"{sorted(missing_settings)}"
+        )
+
+    if "xas_suffix" in spectrum:
+        raise ValueError(
+            "Obsolete spectrum.xas_suffix is present. "
+            "Use xas_right_suffix and xas_left_suffix."
+        )
+
+    xas_right_suffix = str(
+        spectrum[
+            "xas_right_suffix"
+        ]
+    ).strip()
+
+    xas_left_suffix = str(
+        spectrum[
+            "xas_left_suffix"
+        ]
+    ).strip()
+
+    xmcd_suffix = str(
+        spectrum[
+            "xmcd_suffix"
+        ]
+    ).strip()
+
+    suffixes = (
+        xas_right_suffix,
+        xas_left_suffix,
+        xmcd_suffix,
+    )
+
+    if any(
+        not suffix
+        for suffix in suffixes
+    ):
+        raise ValueError(
+            "Spectrum suffixes must not be empty"
+        )
+
+    if len(
+        set(
+            suffixes
+        )
+    ) != len(
+        suffixes
+    ):
+        raise ValueError(
+            "Right-XAS, left-XAS, and XMCD suffixes "
+            "must differ"
+        )
+
+    return {
+        "xas": EXPECTED_XAS_DEFINITION,
+        "xmcd": EXPECTED_XMCD_DEFINITION,
+        "xas_definition": EXPECTED_XAS_DEFINITION,
+        "xmcd_definition": EXPECTED_XMCD_DEFINITION,
+        "xas_right_suffix": xas_right_suffix,
+        "xas_left_suffix": xas_left_suffix,
+        "xmcd_suffix": xmcd_suffix,
+        "external_field_is_model_input": (
+            EXPECTED_EXTERNAL_FIELD_IS_MODEL_INPUT
+        ),
+    }
+
+
+# ============================================================
+# External-field configuration
+# ============================================================
+
+def validate_external_field(
+    config,
+):
+    """Validate and normalize the external-field config."""
+
+    if "external_magnetic_field" not in config:
+        raise ValueError(
+            "Config must contain external_magnetic_field"
+        )
+
+    field = config[
+        "external_magnetic_field"
+    ]
+
+    if not isinstance(
+        field,
+        dict,
+    ):
+        raise TypeError(
+            "external_magnetic_field must be a dictionary"
+        )
+
+    for key in (
+        "enabled",
+        "magnitude_t",
+        "direction",
+    ):
+        if key not in field:
+            raise ValueError(
+                "Missing external_magnetic_field."
+                f"{key}"
+            )
+
+    if not isinstance(
+        field[
+            "enabled"
+        ],
+        bool,
+    ):
+        raise TypeError(
+            "external_magnetic_field.enabled must "
+            "be true or false"
+        )
+
+    magnitude = validate_nonnegative_float(
+        "external_magnetic_field.magnitude_t",
+        field[
+            "magnitude_t"
+        ],
+    )
+
+    tolerance = validate_nonnegative_float(
+        "external_magnetic_field.tolerance_t",
+        field.get(
+            "tolerance_t",
+            1.0e-9,
+        ),
+    )
+
+    direction = normalize_direction(
+        "external_magnetic_field.direction",
+        field[
+            "direction"
+        ],
+    )
+
+    if (
+        not field[
+            "enabled"
+        ]
+        and not np.isclose(
+            magnitude,
+            0.0,
+            rtol=0.0,
+            atol=tolerance,
+        )
+    ):
+        raise ValueError(
+            "External-field magnitude must be zero "
+            "when the field is disabled"
+        )
+
+    return {
+        "enabled": field[
+            "enabled"
+        ],
+        "magnitude_t": magnitude,
+        "direction": direction.tolist(),
+        "tolerance_t": tolerance,
+        "is_model_input": False,
+    }
+
+
+# ============================================================
+# Main configuration validation
+# ============================================================
+
+def validate_config(
+    config,
+):
+    """Validate the full training configuration."""
+
+    if not isinstance(
+        config,
+        dict,
+    ):
+        raise TypeError(
+            "Configuration must be a dictionary"
+        )
+
+    required_sections = {
+        "system",
+        "paths",
+        "spectrum",
+        "model",
+        "training",
+        "external_magnetic_field",
+    }
+
+    missing_sections = (
+        required_sections
+        - set(
+            config
+        )
+    )
+
+    if missing_sections:
+        raise ValueError(
+            "Missing configuration sections: "
+            f"{sorted(missing_sections)}"
+        )
+
+    system_name = str(
+        config[
+            "system"
+        ].get(
+            "name",
+            "",
+        )
+    ).strip()
+
+    if not system_name:
+        raise ValueError(
+            "system.name must not be empty"
+        )
+
+    path_keys = {
+        "repository_root",
+        "preprocessed_dataset_npz",
+        "model_output_directory",
+        "result_output_directory",
+    }
+
+    missing_paths = (
+        path_keys
+        - set(
+            config[
+                "paths"
+            ]
+        )
+    )
+
+    if missing_paths:
+        raise ValueError(
+            "Missing path settings: "
+            f"{sorted(missing_paths)}"
+        )
+
+    training = config[
+        "training"
+    ]
+
+    if not isinstance(
+        training,
+        dict,
+    ):
+        raise TypeError(
+            "training must be a dictionary"
+        )
+
+    for subsection in (
+        "optimizer",
+        "loss",
+        "data_loader",
+        "early_stopping",
+        "checkpoint",
+    ):
+        if subsection not in training:
+            raise ValueError(
+                "Missing training subsection: "
+                f"{subsection}"
+            )
+
+    spectrum_definitions = validate_spectrum_config(
+        config
+    )
+
+    external_field = validate_external_field(
+        config
+    )
+
+    return (
+        system_name,
+        spectrum_definitions,
+        external_field,
+    )
+
+
+# ============================================================
+# Preprocessed spectrum metadata
+# ============================================================
+
+def load_preprocessed_metadata(
+    dataset_file,
+    expected_spectrum,
+    expected_field,
+):
+    """Load and validate metadata from the preprocessed NPZ."""
+
+    with np.load(
+        dataset_file,
+        allow_pickle=False,
+    ) as dataset:
+        required_arrays = {
+            "X_train",
+            "X_validation",
+            "X_test",
+            "target_names",
+            "xas_definition",
+            "xmcd_definition",
+            "n_xas",
+            "n_xmcd",
+            "external_field_enabled",
+            "external_field_magnitude_t",
+            "external_field_direction",
+            "external_field_is_model_input",
+        }
+
+        missing_arrays = (
+            required_arrays
+            - set(
+                dataset.files
+            )
+        )
+
+        if missing_arrays:
+            raise ValueError(
+                "Preprocessed dataset is missing arrays: "
+                f"{sorted(missing_arrays)}"
+            )
+
+        x_train_shape = np.asarray(
+            dataset[
+                "X_train"
+            ]
+        ).shape
+
+        x_validation_shape = np.asarray(
+            dataset[
+                "X_validation"
+            ]
+        ).shape
+
+        x_test_shape = np.asarray(
+            dataset[
+                "X_test"
+            ]
+        ).shape
+
+        target_names = dataset[
+            "target_names"
+        ].astype(
+            str
+        )
+
+        xas_definition = read_scalar_string(
+            "xas_definition",
+            dataset[
+                "xas_definition"
+            ],
+        )
+
+        xmcd_definition = read_scalar_string(
+            "xmcd_definition",
+            dataset[
+                "xmcd_definition"
+            ],
+        )
+
+        n_xas = read_scalar_integer(
+            "n_xas",
+            dataset[
+                "n_xas"
+            ],
+        )
+
+        n_xmcd = read_scalar_integer(
+            "n_xmcd",
+            dataset[
+                "n_xmcd"
+            ],
+        )
+
+        field_is_model_input = read_scalar_boolean(
+            "external_field_is_model_input",
+            dataset[
+                "external_field_is_model_input"
+            ],
+        )
+
+        field_enabled = read_scalar_boolean(
+            "external_field_enabled",
+            dataset[
+                "external_field_enabled"
+            ],
+        )
+
+        field_magnitude = read_scalar_float(
+            "external_field_magnitude_t",
+            dataset[
+                "external_field_magnitude_t"
+            ],
+        )
+
+        field_direction = normalize_direction(
+            "preprocessed external_field_direction",
+            dataset[
+                "external_field_direction"
+            ],
+        )
+
+    for name, shape in (
+        (
+            "X_train",
+            x_train_shape,
+        ),
+        (
+            "X_validation",
+            x_validation_shape,
+        ),
+        (
+            "X_test",
+            x_test_shape,
+        ),
+    ):
+        if len(
+            shape
+        ) != 2:
+            raise ValueError(
+                f"{name} must be two-dimensional"
+            )
+
+        if shape[
+            0
+        ] <= 0:
+            raise ValueError(
+                f"{name} must contain samples"
+            )
+
+        if shape[
+            1
+        ] != (
+            n_xas
+            + n_xmcd
+        ):
+            raise ValueError(
+                f"{name} feature count differs from "
+                "n_xas + n_xmcd"
+            )
+
+    if target_names.tolist() != [
+        "Sz",
+        "Lz",
+    ]:
+        raise ValueError(
+            "Target order must be ['Sz', 'Lz']; found "
+            f"{target_names.tolist()}"
+        )
+
+    if normalize_definition(
+        xas_definition
+    ) != normalize_definition(
+        expected_spectrum[
+            "xas_definition"
+        ]
+    ):
+        raise ValueError(
+            "Preprocessed XAS definition differs from "
+            "the expected definition: "
+            f"{xas_definition!r}"
+        )
+
+    if normalize_definition(
+        xmcd_definition
+    ) != normalize_definition(
+        expected_spectrum[
+            "xmcd_definition"
+        ]
+    ):
+        raise ValueError(
+            "Preprocessed XMCD definition differs from "
+            "the expected definition: "
+            f"{xmcd_definition!r}"
+        )
+
+    if field_is_model_input:
+        raise ValueError(
+            "Preprocessed dataset incorrectly treats "
+            "the external field as a model input"
+        )
+
+    if field_enabled != expected_field[
+        "enabled"
+    ]:
+        raise ValueError(
+            "External-field enabled state differs between "
+            "config and preprocessed dataset"
+        )
+
+    if not np.isclose(
+        field_magnitude,
+        expected_field[
+            "magnitude_t"
+        ],
+        rtol=0.0,
+        atol=expected_field[
+            "tolerance_t"
+        ],
+    ):
+        raise ValueError(
+            "External-field magnitude differs between "
+            "config and preprocessed dataset"
+        )
+
+    if not np.allclose(
+        field_direction,
+        expected_field[
+            "direction"
+        ],
+        rtol=0.0,
+        atol=1.0e-12,
+    ):
+        raise ValueError(
+            "External-field direction differs between "
+            "config and preprocessed dataset"
+        )
+
+    return {
+        "xas": xas_definition,
+        "xmcd": xmcd_definition,
+        "xas_definition": xas_definition,
+        "xmcd_definition": xmcd_definition,
+        "xas_right_suffix": expected_spectrum[
+            "xas_right_suffix"
+        ],
+        "xas_left_suffix": expected_spectrum[
+            "xas_left_suffix"
+        ],
+        "xmcd_suffix": expected_spectrum[
+            "xmcd_suffix"
+        ],
+        "n_xas": n_xas,
+        "n_xmcd": n_xmcd,
+        "total_input_features": (
+            n_xas
+            + n_xmcd
+        ),
+        "feature_order": (
+            "[XAS channels, XMCD channels]"
+        ),
+        "external_field_is_model_input": (
+            field_is_model_input
+        ),
+        "target_order": target_names.tolist(),
+    }
+
+
+# ============================================================
+# Torch dtype and CPU threads
+# ============================================================
+
+def select_torch_dtype(
+    dtype_name,
+):
+    dtype_name = str(
+        dtype_name
+    ).lower()
+
+    mapping = {
+        "float32": torch.float32,
+        "float64": torch.float64,
+    }
+
+    if dtype_name not in mapping:
+        raise ValueError(
+            "training.dtype must be 'float32' or 'float64'"
+        )
+
+    return (
+        dtype_name,
+        mapping[
+            dtype_name
+        ],
+    )
+
+
+def detect_available_cpu_count():
+    try:
+        count = len(
+            os.sched_getaffinity(
+                0
+            )
+        )
+
+    except (
+        AttributeError,
+        OSError,
+    ):
+        count = os.cpu_count()
+
+    return max(
+        1,
+        int(
+            count
+            or 1
+        ),
+    )
+
+
+def parse_thread_setting(
+    name,
+    value,
+    automatic_value,
+):
+    if (
+        value is None
+        or str(
+            value
+        ).strip().lower() == "auto"
+    ):
+        return int(
+            automatic_value
+        )
+
+    if isinstance(
+        value,
+        bool,
+    ):
+        raise TypeError(
+            f"{name} must be a positive integer or 'auto'"
+        )
+
+    value = int(
+        value
+    )
+
+    if value <= 0:
+        raise ValueError(
+            f"{name} must be positive"
+        )
+
+    return value
+
+
+def configure_cpu_threads(
+    training_config,
     device,
 ):
-    """
-    Load a PyTorch checkpoint.
+    cpu_config = training_config.get(
+        "cpu_threads",
+        {},
+    )
 
-    The fallback provides compatibility with older PyTorch versions
-    that do not support the weights_only argument.
-    """
+    if not isinstance(
+        cpu_config,
+        dict,
+    ):
+        raise TypeError(
+            "training.cpu_threads must be a dictionary"
+        )
+
+    available = detect_available_cpu_count()
+
+    requested_num = cpu_config.get(
+        "num_threads",
+        "auto",
+    )
+
+    requested_interop = cpu_config.get(
+        "interop_threads",
+        "auto",
+    )
+
+    num_threads = parse_thread_setting(
+        "cpu_threads.num_threads",
+        requested_num,
+        available,
+    )
+
+    interop_threads = parse_thread_setting(
+        "cpu_threads.interop_threads",
+        requested_interop,
+        max(
+            1,
+            min(
+                8,
+                available // 4,
+            ),
+        ),
+    )
+
+    warn_on_oversubscription = cpu_config.get(
+        "warn_on_oversubscription",
+        True,
+    )
+
+    if not isinstance(
+        warn_on_oversubscription,
+        bool,
+    ):
+        raise TypeError(
+            "cpu_threads.warn_on_oversubscription "
+            "must be true or false"
+        )
+
+    if warn_on_oversubscription:
+        if num_threads > available:
+            print(
+                "Warning: intra-op threads "
+                f"{num_threads} exceed CPUs {available}"
+            )
+
+        if interop_threads > available:
+            print(
+                "Warning: inter-op threads "
+                f"{interop_threads} exceed CPUs {available}"
+            )
+
+    for environment_variable in (
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
+        os.environ[
+            environment_variable
+        ] = str(
+            num_threads
+        )
+
+    torch.set_num_threads(
+        num_threads
+    )
 
     try:
-        checkpoint = torch.load(
-            checkpoint_path,
+        torch.set_num_interop_threads(
+            interop_threads
+        )
+
+    except RuntimeError as exception:
+        raise RuntimeError(
+            "Configure inter-op threads before parallel "
+            "work starts"
+        ) from exception
+
+    return {
+        "device": str(
+            device
+        ),
+        "available_logical_cpus": available,
+        "requested_num_threads": requested_num,
+        "requested_interop_threads": requested_interop,
+        "effective_num_threads": int(
+            torch.get_num_threads()
+        ),
+        "effective_interop_threads": int(
+            torch.get_num_interop_threads()
+        ),
+    }
+
+
+# ============================================================
+# Optimizer and loss
+# ============================================================
+
+def build_optimizer(
+    model,
+    config,
+):
+    if str(
+        config.get(
+            "name",
+            "adam",
+        )
+    ).lower() != "adam":
+        raise ValueError(
+            "Only Adam is implemented"
+        )
+
+    learning_rate = validate_positive_float(
+        "optimizer.learning_rate",
+        config.get(
+            "learning_rate",
+            2.0e-5,
+        ),
+    )
+
+    beta1 = validate_probability_open(
+        "optimizer.beta1",
+        config.get(
+            "beta1",
+            0.9,
+        ),
+    )
+
+    beta2 = validate_probability_open(
+        "optimizer.beta2",
+        config.get(
+            "beta2",
+            0.999,
+        ),
+    )
+
+    epsilon = validate_positive_float(
+        "optimizer.epsilon",
+        config.get(
+            "epsilon",
+            1.0e-8,
+        ),
+    )
+
+    weight_decay = validate_nonnegative_float(
+        "optimizer.weight_decay",
+        config.get(
+            "weight_decay",
+            0.0,
+        ),
+    )
+
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=learning_rate,
+        betas=(
+            beta1,
+            beta2,
+        ),
+        eps=epsilon,
+        weight_decay=weight_decay,
+    )
+
+    return (
+        optimizer,
+        {
+            "name": "adam",
+            "learning_rate": learning_rate,
+            "beta1": beta1,
+            "beta2": beta2,
+            "epsilon": epsilon,
+            "weight_decay": weight_decay,
+        },
+    )
+
+
+def build_loss(
+    config,
+    device,
+    dtype,
+):
+    if str(
+        config.get(
+            "name",
+            "mse",
+        )
+    ).lower() != "mse":
+        raise ValueError(
+            "Only MSE loss is implemented"
+        )
+
+    loss_space = str(
+        config.get(
+            "space",
+            "standardized_target_space",
+        )
+    )
+
+    if loss_space != "standardized_target_space":
+        raise ValueError(
+            "Loss must be evaluated in "
+            "standardized_target_space"
+        )
+
+    output_reduction = str(
+        config.get(
+            "output_reduction",
+            "mean",
+        )
+    ).lower()
+
+    batch_reduction = str(
+        config.get(
+            "batch_reduction",
+            "mean",
+        )
+    ).lower()
+
+    if output_reduction not in {
+        "mean",
+        "sum",
+    }:
+        raise ValueError(
+            "loss.output_reduction must be 'mean' or 'sum'"
+        )
+
+    if batch_reduction not in {
+        "mean",
+        "sum",
+    }:
+        raise ValueError(
+            "loss.batch_reduction must be 'mean' or 'sum'"
+        )
+
+    weights = torch.as_tensor(
+        config.get(
+            "target_weights",
+            [
+                1.0,
+                1.0,
+            ],
+        ),
+        device=device,
+        dtype=dtype,
+    )
+
+    if weights.shape != (
+        2,
+    ):
+        raise ValueError(
+            "loss.target_weights must contain two values"
+        )
+
+    if not torch.isfinite(
+        weights
+    ).all():
+        raise ValueError(
+            "loss.target_weights must be finite"
+        )
+
+    if torch.any(
+        weights < 0.0
+    ):
+        raise ValueError(
+            "loss.target_weights must be nonnegative"
+        )
+
+    if weights.sum() <= 0.0:
+        raise ValueError(
+            "At least one target weight must be positive"
+        )
+
+    def per_sample(
+        prediction,
+        target,
+    ):
+        weighted_squared_error = (
+            (
+                prediction
+                - target
+            ) ** 2
+            * weights.reshape(
+                1,
+                2,
+            )
+        )
+
+        if output_reduction == "mean":
+            return weighted_squared_error.mean(
+                dim=1
+            )
+
+        return weighted_squared_error.sum(
+            dim=1
+        )
+
+    def loss_function(
+        prediction,
+        target,
+    ):
+        values = per_sample(
+            prediction,
+            target,
+        )
+
+        if batch_reduction == "mean":
+            return values.mean()
+
+        return values.sum()
+
+    return (
+        loss_function,
+        per_sample,
+        batch_reduction,
+        {
+            "name": "mse",
+            "space": "standardized_target_space",
+            "output_reduction": output_reduction,
+            "batch_reduction": batch_reduction,
+            "effective_target_weights": (
+                weights.detach().cpu().tolist()
+            ),
+        },
+    )
+
+
+# ============================================================
+# Epoch execution
+# ============================================================
+
+def run_epoch(
+    model,
+    loader,
+    loss_function,
+    per_sample_loss,
+    batch_reduction,
+    device,
+    dtype,
+    optimizer=None,
+    gradient_clip_norm=None,
+):
+    training = (
+        optimizer is not None
+    )
+
+    model.train(
+        training
+    )
+
+    loss_sum = 0.0
+    sample_count = 0
+
+    gradient_norm_sum = 0.0
+    gradient_norm_count = 0
+    maximum_gradient_norm = None
+
+    context = (
+        torch.enable_grad()
+        if training
+        else torch.inference_mode()
+    )
+
+    with context:
+        for inputs, targets in loader:
+            inputs = inputs.to(
+                device=device,
+                dtype=dtype,
+                non_blocking=True,
+            )
+
+            targets = targets.to(
+                device=device,
+                dtype=dtype,
+                non_blocking=True,
+            )
+
+            if training:
+                optimizer.zero_grad(
+                    set_to_none=True
+                )
+
+            predictions = model(
+                inputs
+            )
+
+            if not torch.isfinite(
+                predictions
+            ).all():
+                raise RuntimeError(
+                    "Non-finite prediction detected"
+                )
+
+            loss = loss_function(
+                predictions,
+                targets,
+            )
+
+            per_sample = per_sample_loss(
+                predictions,
+                targets,
+            )
+
+            if (
+                not torch.isfinite(
+                    loss
+                )
+                or not torch.isfinite(
+                    per_sample
+                ).all()
+            ):
+                raise RuntimeError(
+                    "Non-finite loss detected"
+                )
+
+            if training:
+                loss.backward()
+
+                if any(
+                    parameter.grad is not None
+                    and not torch.isfinite(
+                        parameter.grad
+                    ).all()
+                    for parameter in model.parameters()
+                ):
+                    raise RuntimeError(
+                        "Non-finite gradient detected"
+                    )
+
+                if gradient_clip_norm is not None:
+                    gradient_norm = float(
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(),
+                            gradient_clip_norm,
+                            error_if_nonfinite=True,
+                        ).detach().cpu()
+                    )
+
+                    gradient_norm_sum += (
+                        gradient_norm
+                    )
+
+                    gradient_norm_count += 1
+
+                    maximum_gradient_norm = (
+                        gradient_norm
+                        if maximum_gradient_norm is None
+                        else max(
+                            maximum_gradient_norm,
+                            gradient_norm,
+                        )
+                    )
+
+                optimizer.step()
+
+            loss_sum += float(
+                per_sample.detach().sum().cpu()
+            )
+
+            sample_count += int(
+                inputs.shape[
+                    0
+                ]
+            )
+
+    if sample_count == 0:
+        raise RuntimeError(
+            "DataLoader produced no samples"
+        )
+
+    return {
+        "mean_per_sample_loss": (
+            loss_sum
+            / sample_count
+        ),
+
+        "processed_samples": sample_count,
+
+        "batch_reduction": batch_reduction,
+
+        "mean_gradient_norm_before_clipping": (
+            gradient_norm_sum
+            / gradient_norm_count
+            if gradient_norm_count
+            else None
+        ),
+
+        "maximum_gradient_norm_before_clipping": (
+            maximum_gradient_norm
+        ),
+    }
+
+
+# ============================================================
+# Checkpoint handling
+# ============================================================
+
+def save_checkpoint(
+    path,
+    model,
+    optimizer,
+    epoch,
+    validation_loss,
+    config,
+    repository_root,
+    config_path,
+    dataset_file,
+    cpu_threads,
+    external_field,
+    spectrum_definitions,
+):
+    """Save a reproducible training checkpoint."""
+
+    model_configuration = dict(
+        model.configuration()
+    )
+
+    model_configuration[
+        "external_field_is_model_input"
+    ] = False
+
+    model_configuration[
+        "input_feature_count"
+    ] = int(
+        model.n_in
+    )
+
+    checkpoint = {
+        "checkpoint_format_version": 3,
+
+        "created_at_utc": utc_now_iso(),
+
+        "epoch": int(
+            epoch
+        ),
+
+        "validation_loss": float(
+            validation_loss
+        ),
+
+        "model_state_dict": model.state_dict(),
+
+        "optimizer_state_dict": optimizer.state_dict(),
+
+        "model_configuration": model_configuration,
+
+        "training_configuration": public_config_copy(
+            config
+        ),
+
+        "spectrum_definitions": {
+            "xas": spectrum_definitions[
+                "xas_definition"
+            ],
+
+            "xmcd": spectrum_definitions[
+                "xmcd_definition"
+            ],
+
+            "xas_definition": spectrum_definitions[
+                "xas_definition"
+            ],
+
+            "xmcd_definition": spectrum_definitions[
+                "xmcd_definition"
+            ],
+
+            "xas_right_suffix": spectrum_definitions[
+                "xas_right_suffix"
+            ],
+
+            "xas_left_suffix": spectrum_definitions[
+                "xas_left_suffix"
+            ],
+
+            "xmcd_suffix": spectrum_definitions[
+                "xmcd_suffix"
+            ],
+
+            "n_xas": int(
+                spectrum_definitions[
+                    "n_xas"
+                ]
+            ),
+
+            "n_xmcd": int(
+                spectrum_definitions[
+                    "n_xmcd"
+                ]
+            ),
+
+            "total_input_features": int(
+                spectrum_definitions[
+                    "total_input_features"
+                ]
+            ),
+
+            "feature_order": spectrum_definitions[
+                "feature_order"
+            ],
+
+            "target_order": spectrum_definitions[
+                "target_order"
+            ],
+
+            "external_field_is_model_input": False,
+        },
+
+        "external_magnetic_field": external_field,
+
+        "cpu_threads": cpu_threads,
+
+        "source_files": {
+            "config": safe_public_path(
+                config_path,
+                repository_root,
+            ),
+
+            "preprocessed_dataset": safe_public_path(
+                dataset_file,
+                repository_root,
+            ),
+        },
+
+        "source_sha256": {
+            "config": sha256_file(
+                config_path
+            ),
+
+            "preprocessed_dataset": sha256_file(
+                dataset_file
+            ),
+        },
+
+        "torch_rng_state": torch.get_rng_state(),
+
+        "numpy_random_state": np.random.get_state(),
+
+        "python_random_state": random.getstate(),
+    }
+
+    if torch.cuda.is_available():
+        checkpoint[
+            "cuda_rng_state_all"
+        ] = torch.cuda.get_rng_state_all()
+
+    torch.save(
+        checkpoint,
+        path,
+    )
+
+
+def load_checkpoint(
+    path,
+    device,
+):
+    """Load a checkpoint across supported PyTorch versions."""
+
+    try:
+        return torch.load(
+            path,
             map_location=device,
             weights_only=False,
         )
 
     except TypeError:
-        checkpoint = torch.load(
-            checkpoint_path,
+        return torch.load(
+            path,
             map_location=device,
         )
-
-    return checkpoint
-
-
-def extract_model_state_dict(
-    checkpoint,
-):
-    """
-    Extract the model state dictionary.
-
-    Supports:
-    - complete checkpoint dictionaries,
-    - legacy files containing state_dict only.
-    """
-
-    if not isinstance(
-        checkpoint,
-        dict,
-    ):
-        raise TypeError(
-            "Checkpoint must be a dictionary"
-        )
-
-    if "model_state_dict" in checkpoint:
-        return checkpoint[
-            "model_state_dict"
-        ]
-
-    # Compatibility with legacy state_dict-only files.
-    if checkpoint and all(
-        torch.is_tensor(value)
-        for value in checkpoint.values()
-    ):
-        return checkpoint
-
-    raise ValueError(
-        "Checkpoint does not contain "
-        "'model_state_dict' and does not appear "
-        "to be a state_dict-only file"
-    )
-
-
-def validate_checkpoint_configuration(
-    checkpoint,
-    config,
-):
-    """
-    Compare checkpoint model configuration with the current config.
-
-    Legacy state_dict-only files do not contain configuration
-    metadata and therefore cannot be checked here.
-    """
-
-    if not isinstance(
-        checkpoint,
-        dict,
-    ):
-        return
-
-    saved_model_config = checkpoint.get(
-        "model_configuration"
-    )
-
-    if saved_model_config is None:
-        return
-
-    current_model_config = config[
-        "model"
-    ]
-
-    comparisons = {
-        "hidden_units": (
-            list(
-                current_model_config.get(
-                    "hidden_units",
-                    [
-                        256,
-                        128,
-                    ],
-                )
-            ),
-            saved_model_config.get(
-                "hidden_units"
-            ),
-        ),
-
-        "dropout_rate": (
-            float(
-                current_model_config.get(
-                    "dropout_rate",
-                    0.1,
-                )
-            ),
-            saved_model_config.get(
-                "dropout_rate"
-            ),
-        ),
-
-        "batch_normalization": (
-            bool(
-                current_model_config.get(
-                    "use_batch_normalization",
-                    True,
-                )
-            ),
-            saved_model_config.get(
-                "batch_normalization"
-            ),
-        ),
-
-        "output_order": (
-            list(
-                current_model_config.get(
-                    "output_names",
-                    [
-                        "Sz",
-                        "Lz",
-                    ],
-                )
-            ),
-            saved_model_config.get(
-                "output_order"
-            ),
-        ),
-    }
-
-    mismatches = []
-
-    for setting_name, (
-        current_value,
-        saved_value,
-    ) in comparisons.items():
-        if (
-            saved_value is not None
-            and current_value != saved_value
-        ):
-            mismatches.append(
-                {
-                    "setting": (
-                        setting_name
-                    ),
-                    "current": (
-                        current_value
-                    ),
-                    "checkpoint": (
-                        saved_value
-                    ),
-                }
-            )
-
-    if mismatches:
-        raise ValueError(
-            "The current model configuration "
-            "does not match the selected checkpoint: "
-            f"{mismatches}"
-        )
-
-
-# ============================================================
-# Metadata merge
-# ============================================================
-
-def merge_accepted_metadata(
-    prediction_dataframe,
-    accepted_metadata_file,
-):
-    """
-    Merge accepted-sample metadata into predictions by sample_id.
-    """
-
-    accepted_metadata = pd.read_csv(
-        accepted_metadata_file
-    )
-
-    required_columns = {
-        "sample_id",
-        "prefix",
-    }
-
-    missing_columns = (
-        required_columns
-        - set(
-            accepted_metadata.columns
-        )
-    )
-
-    if missing_columns:
-        raise ValueError(
-            "Accepted metadata is missing columns: "
-            f"{sorted(missing_columns)}"
-        )
-
-    if accepted_metadata[
-        "sample_id"
-    ].duplicated().any():
-        raise ValueError(
-            "accepted_metadata_csv contains "
-            "duplicate sample_id values"
-        )
-
-    excluded_columns = {
-        "accepted",
-        "exclusion_reason",
-    }
-
-    metadata_columns = [
-        column
-        for column in (
-            accepted_metadata.columns
-        )
-        if (
-            column
-            not in prediction_dataframe.columns
-            and column
-            not in excluded_columns
-        )
-    ]
-
-    merged_dataframe = (
-        prediction_dataframe.merge(
-            accepted_metadata[
-                [
-                    "sample_id"
-                ]
-                + metadata_columns
-            ],
-            on="sample_id",
-            how="left",
-            validate="one_to_one",
-            indicator=True,
-        )
-    )
-
-    unmatched_rows = (
-        merged_dataframe[
-            "_merge"
-        ]
-        != "both"
-    )
-
-    if unmatched_rows.any():
-        missing_sample_ids = (
-            merged_dataframe.loc[
-                unmatched_rows,
-                "sample_id",
-            ]
-            .astype(str)
-            .tolist()
-        )
-
-        raise ValueError(
-            "Some test sample IDs were not found "
-            "in accepted metadata: "
-            f"{missing_sample_ids[:10]}"
-        )
-
-    merged_dataframe = (
-        merged_dataframe.drop(
-            columns=[
-                "_merge"
-            ]
-        )
-    )
-
-    return merged_dataframe
-
-
-# ============================================================
-# Prediction table
-# ============================================================
-
-def build_prediction_dataframe(
-    sample_ids,
-    prefixes,
-    target_names,
-    y_true_standardized,
-    y_pred_standardized,
-    y_true_physical,
-    y_pred_physical,
-):
-    """
-    Build the complete test-prediction table.
-    """
-
-    prediction_dataframe = pd.DataFrame(
-        {
-            "sample_id": (
-                sample_ids
-            ),
-
-            "prefix": (
-                prefixes
-            ),
-
-            "subset": (
-                "test"
-            ),
-        }
-    )
-
-    for target_index, target_name in enumerate(
-        target_names
-    ):
-        lower_name = str(
-            target_name
-        ).lower()
-
-        prediction_dataframe[
-            f"{lower_name}_true_standardized"
-        ] = y_true_standardized[
-            :,
-            target_index,
-        ]
-
-        prediction_dataframe[
-            f"{lower_name}_pred_standardized"
-        ] = y_pred_standardized[
-            :,
-            target_index,
-        ]
-
-        prediction_dataframe[
-            f"{lower_name}_true"
-        ] = y_true_physical[
-            :,
-            target_index,
-        ]
-
-        prediction_dataframe[
-            f"{lower_name}_pred"
-        ] = y_pred_physical[
-            :,
-            target_index,
-        ]
-
-        prediction_dataframe[
-            f"{lower_name}_residual"
-        ] = (
-            y_pred_physical[
-                :,
-                target_index,
-            ]
-            - y_true_physical[
-                :,
-                target_index,
-            ]
-        )
-
-    return prediction_dataframe
-
-
-def arrays_from_prediction_dataframe(
-    prediction_dataframe,
-    target_names,
-):
-    """
-    Reconstruct metric arrays from predictions.csv columns.
-
-    This ensures that metrics are calculated from exactly the rows
-    and values represented in the public prediction table.
-    """
-
-    true_physical_columns = []
-    predicted_physical_columns = []
-
-    true_standardized_columns = []
-    predicted_standardized_columns = []
-
-    for target_name in target_names:
-        lower_name = str(
-            target_name
-        ).lower()
-
-        true_physical_columns.append(
-            f"{lower_name}_true"
-        )
-
-        predicted_physical_columns.append(
-            f"{lower_name}_pred"
-        )
-
-        true_standardized_columns.append(
-            f"{lower_name}_true_standardized"
-        )
-
-        predicted_standardized_columns.append(
-            f"{lower_name}_pred_standardized"
-        )
-
-    y_true_physical = (
-        prediction_dataframe[
-            true_physical_columns
-        ]
-        .to_numpy(
-            dtype=np.float64
-        )
-    )
-
-    y_pred_physical = (
-        prediction_dataframe[
-            predicted_physical_columns
-        ]
-        .to_numpy(
-            dtype=np.float64
-        )
-    )
-
-    y_true_standardized = (
-        prediction_dataframe[
-            true_standardized_columns
-        ]
-        .to_numpy(
-            dtype=np.float64
-        )
-    )
-
-    y_pred_standardized = (
-        prediction_dataframe[
-            predicted_standardized_columns
-        ]
-        .to_numpy(
-            dtype=np.float64
-        )
-    )
-
-    return (
-        y_true_physical,
-        y_pred_physical,
-        y_true_standardized,
-        y_pred_standardized,
-    )
 
 
 # ============================================================
@@ -639,103 +1898,49 @@ def main():
         config_path
     )
 
+    (
+        system_name,
+        configured_spectrum,
+        configured_field,
+    ) = validate_config(
+        config
+    )
+
     config_directory = (
         config_path.parent
     )
 
-    # --------------------------------------------------------
-    # Validate configuration
-    # --------------------------------------------------------
-
-    required_sections = {
-        "system",
-        "paths",
-        "model",
-        "training",
-    }
-
-    missing_sections = (
-        required_sections
-        - set(config)
+    repository_root = get_repository_root(
+        config,
+        config_path,
     )
 
-    if missing_sections:
-        raise ValueError(
-            "Missing configuration sections: "
-            f"{sorted(missing_sections)}"
-        )
-
-    if "name" not in config[
-        "system"
-    ]:
-        raise ValueError(
-            "Config must contain system.name"
-        )
-
-    repository_root = (
-        get_repository_root(
-            config,
-            config_path,
-        )
-    )
-
-    system_name = (
-        config[
-            "system"
-        ][
-            "name"
-        ]
-    )
+    training = config[
+        "training"
+    ]
 
     paths = config[
         "paths"
     ]
 
-    training_config = config[
-        "training"
-    ]
-
-    required_path_keys = {
-        "preprocessed_dataset_npz",
-        "scalers_npz",
-        "selected_model_checkpoint",
-        "result_output_directory",
-    }
-
-    missing_path_keys = (
-        required_path_keys
-        - set(paths)
-    )
-
-    if missing_path_keys:
-        raise ValueError(
-            "Config paths section is missing: "
-            f"{sorted(missing_path_keys)}"
-        )
-
     # --------------------------------------------------------
-    # Resolve input and output paths
+    # Paths
     # --------------------------------------------------------
 
-    preprocessed_file = resolve_path(
+    dataset_file = resolve_path(
         paths[
             "preprocessed_dataset_npz"
         ],
         config_directory,
     )
 
-    scaler_file = resolve_path(
-        paths[
-            "scalers_npz"
-        ],
-        config_directory,
-    )
-
-    selected_checkpoint = resolve_path(
-        paths[
-            "selected_model_checkpoint"
-        ],
-        config_directory,
+    model_directory = ensure_directory(
+        resolve_path(
+            paths[
+                "model_output_directory"
+            ],
+            config_directory,
+        )
     )
 
     result_directory = ensure_directory(
@@ -747,1046 +1952,1044 @@ def main():
         )
     )
 
-    if "accepted_metadata_csv" in paths:
-        accepted_metadata_file = resolve_path(
-            paths[
-                "accepted_metadata_csv"
-            ],
-            config_directory,
+    if not dataset_file.is_file():
+        raise FileNotFoundError(
+            "Preprocessed dataset was not found: "
+            f"{safe_public_path(dataset_file, repository_root)}"
         )
 
-    else:
-        accepted_metadata_file = None
+    # --------------------------------------------------------
+    # Validate preprocessed input definitions
+    # --------------------------------------------------------
 
-    predictions_file = (
-        result_directory
-        / "predictions.csv"
+    spectrum_definitions = load_preprocessed_metadata(
+        dataset_file=dataset_file,
+        expected_spectrum=configured_spectrum,
+        expected_field=configured_field,
     )
 
-    metrics_file = (
-        result_directory
-        / "metrics.json"
-    )
+    # --------------------------------------------------------
+    # Output paths
+    # --------------------------------------------------------
 
-    residual_summary_file = (
-        result_directory
-        / "residual_summary.csv"
-    )
-
-    evaluation_summary_file = (
-        result_directory
-        / "evaluation_summary.json"
-    )
-
-    output_files = [
-        predictions_file,
-        metrics_file,
-        residual_summary_file,
-        evaluation_summary_file,
+    checkpoint_config = training[
+        "checkpoint"
     ]
+
+    checkpoint_filename = str(
+        checkpoint_config.get(
+            "filename",
+            "best_model.pt",
+        )
+    )
+
+    if Path(
+        checkpoint_filename
+    ).name != checkpoint_filename:
+        raise ValueError(
+            "checkpoint.filename must not contain directories"
+        )
+
+    best_checkpoint = (
+        model_directory
+        / checkpoint_filename
+    )
+
+    final_checkpoint = (
+        model_directory
+        / "final_model.pt"
+    )
+
+    selected_checkpoint = (
+        model_directory
+        / "selected_model.pt"
+    )
+
+    history_file = (
+        result_directory
+        / "training_history.csv"
+    )
+
+    summary_file = (
+        result_directory
+        / "training_summary.json"
+    )
+
+    config_copy = (
+        model_directory
+        / "training_config.json"
+    )
 
     check_output_files(
-        output_files,
-        overwrite=(
-            arguments.overwrite
-        ),
-        label="Evaluation outputs",
+        [
+            best_checkpoint,
+            final_checkpoint,
+            selected_checkpoint,
+            history_file,
+            summary_file,
+            config_copy,
+        ],
+        overwrite=arguments.overwrite,
+        label="Training output files",
     )
 
-    required_input_files = [
-        preprocessed_file,
-        scaler_file,
-        selected_checkpoint,
-    ]
-
-    if accepted_metadata_file is not None:
-        required_input_files.append(
-            accepted_metadata_file
-        )
-
-    for required_file in required_input_files:
-        if not required_file.is_file():
-            raise FileNotFoundError(
-                "Required input file was not found: "
-                f"{safe_public_path(required_file, repository_root)}"
-            )
-
     # --------------------------------------------------------
-    # Require complete test-set evaluation
+    # Reproducibility settings
     # --------------------------------------------------------
 
-    if "data_loader" not in training_config:
-        raise ValueError(
-            "Training config must contain "
-            "training.data_loader"
-        )
-
-    data_loader_config = (
-        training_config[
-            "data_loader"
-        ]
-    )
-
-    if bool(
-        data_loader_config.get(
-            "drop_last_evaluation",
-            False,
-        )
-    ):
-        raise ValueError(
-            "drop_last_evaluation must be false "
-            "for complete test-set evaluation"
-        )
-
-    # --------------------------------------------------------
-    # DataLoader
-    # --------------------------------------------------------
-
-    loader_bundle = build_dataloaders(
-        config,
-        config_directory=(
-            config_directory
+    random_seed = validate_nonnegative_integer(
+        "training.random_seed",
+        training.get(
+            "random_seed",
+            1234,
         ),
     )
 
-    test_loader = (
-        loader_bundle[
-            "test_loader"
-        ]
+    deterministic = training.get(
+        "deterministic_algorithms",
+        True,
     )
 
-    dataset = (
-        loader_bundle[
-            "dataset"
-        ]
-    )
-
-    expected_test_count = len(
-        dataset[
-            "sample_id_test"
-        ]
-    )
-
-    if len(
-        loader_bundle[
-            "test_dataset"
-        ]
-    ) != expected_test_count:
-        raise RuntimeError(
-            "Test TensorDataset count differs "
-            "from sample_id_test count"
-        )
-
-    # --------------------------------------------------------
-    # Load target scaler
-    # --------------------------------------------------------
-
-    with np.load(
-        scaler_file,
-        allow_pickle=False,
-    ) as scaler:
-        required_scaler_arrays = {
-            "Y_mean",
-            "Y_std_safe",
-            "target_names",
-        }
-
-        missing_scaler_arrays = (
-            required_scaler_arrays
-            - set(
-                scaler.files
-            )
-        )
-
-        if missing_scaler_arrays:
-            raise ValueError(
-                "Scaler file is missing arrays: "
-                f"{sorted(missing_scaler_arrays)}"
-            )
-
-        y_mean = np.asarray(
-            scaler[
-                "Y_mean"
-            ],
-            dtype=np.float64,
-        )
-
-        y_std_safe = np.asarray(
-            scaler[
-                "Y_std_safe"
-            ],
-            dtype=np.float64,
-        )
-
-        scaler_target_names = (
-            scaler[
-                "target_names"
-            ]
-            .astype(str)
-        )
-
-    target_names = (
-        dataset[
-            "target_names"
-        ]
-        .astype(str)
-    )
-
-    if not np.array_equal(
-        target_names,
-        scaler_target_names,
+    if not isinstance(
+        deterministic,
+        bool,
     ):
-        raise ValueError(
-            "Target order differs between "
-            "the preprocessed dataset and scaler"
+        raise TypeError(
+            "training.deterministic_algorithms must be "
+            "true or false"
         )
-
-    if y_mean.shape != (
-        len(target_names),
-    ):
-        raise ValueError(
-            "Unexpected Y_mean shape: "
-            f"{y_mean.shape}"
-        )
-
-    if y_std_safe.shape != (
-        len(target_names),
-    ):
-        raise ValueError(
-            "Unexpected Y_std_safe shape: "
-            f"{y_std_safe.shape}"
-        )
-
-    ensure_finite(
-        "Y_mean",
-        y_mean,
-    )
-
-    ensure_finite(
-        "Y_std_safe",
-        y_std_safe,
-    )
-
-    if np.any(
-        y_std_safe <= 0
-    ):
-        raise ValueError(
-            "Y_std_safe must contain "
-            "strictly positive values"
-        )
-
-    # --------------------------------------------------------
-    # Device and model
-    # --------------------------------------------------------
 
     device = select_torch_device(
-        training_config.get(
+        training.get(
             "device",
             "auto",
         )
     )
 
-    dtype_name = str(
-        training_config.get(
+    cpu_threads = configure_cpu_threads(
+        training,
+        device,
+    )
+
+    set_random_seeds(
+        random_seed,
+        deterministic_algorithms=deterministic,
+    )
+
+    (
+        dtype_name,
+        dtype,
+    ) = select_torch_dtype(
+        training.get(
             "dtype",
             "float32",
         )
-    ).lower()
+    )
 
-    dtype_map = {
-        "float32": torch.float32,
-        "float64": torch.float64,
+    # --------------------------------------------------------
+    # DataLoaders
+    # --------------------------------------------------------
+
+    loader_bundle = build_dataloaders(
+        config,
+        config_directory=config_directory,
+    )
+
+    dataset = loader_bundle[
+        "dataset"
+    ]
+
+    required_dataset_keys = {
+        "X_train",
+        "Y_train",
+        "X_validation",
+        "Y_validation",
+        "X_test",
+        "Y_test",
+        "target_names",
     }
 
-    if dtype_name not in dtype_map:
-        raise ValueError(
-            "Unsupported training dtype: "
-            f"{dtype_name}"
+    missing_dataset_keys = (
+        required_dataset_keys
+        - set(
+            dataset
         )
-
-    model_dtype = (
-        dtype_map[
-            dtype_name
-        ]
     )
+
+    if missing_dataset_keys:
+        raise ValueError(
+            "DataLoader dataset is missing keys: "
+            f"{sorted(missing_dataset_keys)}"
+        )
 
     input_dimension = int(
         dataset[
             "X_train"
-        ].shape[1]
+        ].shape[
+            1
+        ]
     )
+
+    if input_dimension != spectrum_definitions[
+        "total_input_features"
+    ]:
+        raise RuntimeError(
+            "DataLoader input dimension differs from "
+            "n_xas + n_xmcd"
+        )
+
+    target_names = dataset[
+        "target_names"
+    ].astype(
+        str
+    )
+
+    if target_names.tolist() != spectrum_definitions[
+        "target_order"
+    ]:
+        raise RuntimeError(
+            "DataLoader target order differs from "
+            "preprocessed metadata"
+        )
+
+    field_from_loader = {
+        "enabled": bool(
+            loader_bundle[
+                "external_field_enabled"
+            ]
+        ),
+
+        "magnitude_t": float(
+            loader_bundle[
+                "external_field_magnitude_t"
+            ]
+        ),
+
+        "direction": normalize_direction(
+            "DataLoader external-field direction",
+            loader_bundle[
+                "external_field_direction"
+            ],
+        ).tolist(),
+
+        "tolerance_t": configured_field[
+            "tolerance_t"
+        ],
+
+        "is_model_input": False,
+    }
+
+    if field_from_loader[
+        "enabled"
+    ] != configured_field[
+        "enabled"
+    ]:
+        raise RuntimeError(
+            "External-field enabled state is inconsistent"
+        )
+
+    if not np.isclose(
+        field_from_loader[
+            "magnitude_t"
+        ],
+        configured_field[
+            "magnitude_t"
+        ],
+        rtol=0.0,
+        atol=configured_field[
+            "tolerance_t"
+        ],
+    ):
+        raise RuntimeError(
+            "External-field magnitude is inconsistent"
+        )
+
+    if not np.allclose(
+        field_from_loader[
+            "direction"
+        ],
+        configured_field[
+            "direction"
+        ],
+        rtol=0.0,
+        atol=1.0e-12,
+    ):
+        raise RuntimeError(
+            "External-field direction is inconsistent"
+        )
+
+    if str(
+        loader_bundle[
+            "device"
+        ]
+    ) != str(
+        device
+    ):
+        raise RuntimeError(
+            "DataLoader and training devices are inconsistent"
+        )
+
+    # --------------------------------------------------------
+    # Model, optimizer, and loss
+    # --------------------------------------------------------
 
     model = build_model(
-        n_in=(
-            input_dimension
-        ),
-        model_config=(
-            config["model"]
-        ),
-    )
-
-    model = model.to(
+        input_dimension,
+        config[
+            "model"
+        ],
+    ).to(
         device=device,
-        dtype=model_dtype,
+        dtype=dtype,
     )
 
-    checkpoint = load_checkpoint(
-        selected_checkpoint,
-        device,
-    )
-
-    validate_checkpoint_configuration(
-        checkpoint,
-        config,
-    )
-
-    model_state_dict = (
-        extract_model_state_dict(
-            checkpoint
-        )
-    )
-
-    model.load_state_dict(
-        model_state_dict,
-        strict=True,
-    )
-
-    # Evaluation mode disables Dropout and uses saved
-    # BatchNorm running statistics.
-    model.eval()
-
-    # --------------------------------------------------------
-    # Test-only inference in standardized target space
-    # --------------------------------------------------------
-
-    prediction_batches = []
-
-    with torch.inference_mode():
-        for inputs, _targets in test_loader:
-            inputs = inputs.to(
-                device=device,
-                dtype=model_dtype,
-                non_blocking=True,
-            )
-
-            predicted_batch = model(
-                inputs
-            )
-
-            if not torch.isfinite(
-                predicted_batch
-            ).all():
-                raise RuntimeError(
-                    "Model produced NaN or Inf "
-                    "during test inference"
-                )
-
-            prediction_batches.append(
-                predicted_batch
-                .detach()
-                .cpu()
-                .numpy()
-            )
-
-    if not prediction_batches:
+    if int(
+        model.n_in
+    ) != spectrum_definitions[
+        "total_input_features"
+    ]:
         raise RuntimeError(
-            "Test DataLoader produced no samples"
-        )
-
-    y_pred_standardized = np.vstack(
-        prediction_batches
-    ).astype(
-        np.float64
-    )
-
-    # --------------------------------------------------------
-    # Saved test targets and identifiers
-    # --------------------------------------------------------
-
-    y_true_standardized = np.asarray(
-        dataset[
-            "Y_test"
-        ],
-        dtype=np.float64,
-    )
-
-    y_true_physical = np.asarray(
-        dataset[
-            "Y_test_raw"
-        ],
-        dtype=np.float64,
-    )
-
-    sample_ids = (
-        dataset[
-            "sample_id_test"
-        ]
-        .astype(str)
-    )
-
-    prefixes = (
-        dataset[
-            "prefix_test"
-        ]
-        .astype(str)
-    )
-
-    expected_shape = (
-        expected_test_count,
-        len(target_names),
-    )
-
-    arrays_to_validate = (
-        (
-            "Y_pred_standardized",
-            y_pred_standardized,
-        ),
-        (
-            "Y_true_standardized",
-            y_true_standardized,
-        ),
-        (
-            "Y_true_physical",
-            y_true_physical,
-        ),
-    )
-
-    for array_name, array in arrays_to_validate:
-        if array.shape != expected_shape:
-            raise RuntimeError(
-                f"{array_name} shape mismatch: "
-                f"expected {expected_shape}, "
-                f"found {array.shape}"
-            )
-
-        ensure_finite(
-            array_name,
-            array,
-        )
-
-    if len(prefixes) != expected_test_count:
-        raise RuntimeError(
-            "Prefix count differs from "
-            "the saved test sample count"
-        )
-
-    # --------------------------------------------------------
-    # Convert predictions to physical units
-    # --------------------------------------------------------
-
-    y_pred_physical = (
-        y_pred_standardized
-        * y_std_safe
-        + y_mean
-    )
-
-    ensure_finite(
-        "Y_pred_physical",
-        y_pred_physical,
-    )
-
-    # --------------------------------------------------------
-    # Build and enrich prediction table
-    # --------------------------------------------------------
-
-    prediction_dataframe = (
-        build_prediction_dataframe(
-            sample_ids=(
-                sample_ids
-            ),
-            prefixes=(
-                prefixes
-            ),
-            target_names=(
-                target_names
-            ),
-            y_true_standardized=(
-                y_true_standardized
-            ),
-            y_pred_standardized=(
-                y_pred_standardized
-            ),
-            y_true_physical=(
-                y_true_physical
-            ),
-            y_pred_physical=(
-                y_pred_physical
-            ),
-        )
-    )
-
-    if accepted_metadata_file is not None:
-        prediction_dataframe = (
-            merge_accepted_metadata(
-                prediction_dataframe,
-                accepted_metadata_file,
-            )
-        )
-
-    if len(
-        prediction_dataframe
-    ) != expected_test_count:
-        raise RuntimeError(
-            "Prediction table row count changed "
-            "during metadata merge"
-        )
-
-    if prediction_dataframe[
-        "sample_id"
-    ].duplicated().any():
-        raise RuntimeError(
-            "Prediction table contains "
-            "duplicate sample_id values"
-        )
-
-    prediction_dataframe.to_csv(
-        predictions_file,
-        index=False,
-        quoting=csv.QUOTE_MINIMAL,
-    )
-
-    # --------------------------------------------------------
-    # Reload predictions.csv and calculate metrics from it
-    # --------------------------------------------------------
-
-    saved_predictions = pd.read_csv(
-        predictions_file
-    )
-
-    if len(
-        saved_predictions
-    ) != expected_test_count:
-        raise RuntimeError(
-            "Saved predictions.csv does not contain "
-            "the complete test subset"
-        )
-
-    if saved_predictions[
-        "sample_id"
-    ].duplicated().any():
-        raise RuntimeError(
-            "Saved predictions.csv contains "
-            "duplicate sample_id values"
+            "Model input dimension differs from "
+            "n_xas + n_xmcd"
         )
 
     (
-        metric_y_true_physical,
-        metric_y_pred_physical,
-        metric_y_true_standardized,
-        metric_y_pred_standardized,
-    ) = arrays_from_prediction_dataframe(
-        saved_predictions,
-        target_names,
+        optimizer,
+        optimizer_effective,
+    ) = build_optimizer(
+        model,
+        training[
+            "optimizer"
+        ],
     )
 
-    metrics_physical = (
-        multioutput_regression_metrics(
-            metric_y_true_physical,
-            metric_y_pred_physical,
-            target_names,
+    (
+        loss_function,
+        per_sample_loss,
+        batch_reduction,
+        loss_effective,
+    ) = build_loss(
+        training[
+            "loss"
+        ],
+        device,
+        dtype,
+    )
+
+    maximum_epochs = validate_positive_integer(
+        "training.maximum_epochs",
+        training.get(
+            "maximum_epochs",
+            300,
+        ),
+    )
+
+    gradient_clip_setting = training.get(
+        "gradient_clip_norm",
+        1.0,
+    )
+
+    gradient_clip_norm = (
+        None
+        if gradient_clip_setting is None
+        else validate_positive_float(
+            "training.gradient_clip_norm",
+            gradient_clip_setting,
         )
-    )
-
-    metrics_standardized = (
-        multioutput_regression_metrics(
-            metric_y_true_standardized,
-            metric_y_pred_standardized,
-            target_names,
-        )
-    )
-
-    metrics = {
-        "evaluation_subset": (
-            "test"
-        ),
-
-        "prediction_count": int(
-            len(
-                saved_predictions
-            )
-        ),
-
-        "metric_source": (
-            "predictions.csv"
-        ),
-
-        "physical_target_space": (
-            metrics_physical
-        ),
-
-        "standardized_target_space": (
-            metrics_standardized
-        ),
-    }
-
-    write_json(
-        metrics_file,
-        metrics,
     )
 
     # --------------------------------------------------------
-    # Physical-unit residual summary
+    # Early stopping
     # --------------------------------------------------------
 
-    residual_rows = []
+    early = training[
+        "early_stopping"
+    ]
 
-    for target_name in target_names:
-        target_metrics = (
-            metrics_physical[
-                "per_target"
-            ][
-                str(target_name)
-            ]
+    early_enabled = early.get(
+        "enabled",
+        True,
+    )
+
+    if not isinstance(
+        early_enabled,
+        bool,
+    ):
+        raise TypeError(
+            "early_stopping.enabled must be true or false"
         )
 
-        residual_rows.append(
+    patience = validate_positive_integer(
+        "early_stopping.patience",
+        early.get(
+            "patience",
+            30,
+        ),
+    )
+
+    minimum_delta = validate_nonnegative_float(
+        "early_stopping.minimum_delta",
+        early.get(
+            "minimum_delta",
+            0.0,
+        ),
+    )
+
+    restore_best = early.get(
+        "restore_best_weights",
+        True,
+    )
+
+    save_best = checkpoint_config.get(
+        "save_best",
+        True,
+    )
+
+    if not isinstance(
+        restore_best,
+        bool,
+    ):
+        raise TypeError(
+            "early_stopping.restore_best_weights "
+            "must be true or false"
+        )
+
+    if not isinstance(
+        save_best,
+        bool,
+    ):
+        raise TypeError(
+            "checkpoint.save_best must be true or false"
+        )
+
+    if str(
+        early.get(
+            "monitor",
+            "validation_loss",
+        )
+    ) != "validation_loss":
+        raise ValueError(
+            "Only validation_loss monitoring is supported"
+        )
+
+    if str(
+        early.get(
+            "mode",
+            "min",
+        )
+    ) != "min":
+        raise ValueError(
+            "Only early-stopping mode 'min' is supported"
+        )
+
+    if (
+        restore_best
+        and not save_best
+    ):
+        raise ValueError(
+            "restore_best_weights=true requires "
+            "save_best=true"
+        )
+
+    # --------------------------------------------------------
+    # Training state
+    # --------------------------------------------------------
+
+    history = []
+
+    best_loss = float(
+        "inf"
+    )
+
+    best_epoch = None
+
+    patience_counter = 0
+
+    stopped_early = False
+
+    start_time = time.perf_counter()
+
+    print(
+        "=" * 80
+    )
+
+    print(
+        f"System             : {system_name}"
+    )
+
+    print(
+        f"Device             : {device}"
+    )
+
+    print(
+        f"Dtype              : {dtype_name}"
+    )
+
+    print(
+        "XAS definition     : "
+        f"{spectrum_definitions['xas_definition']}"
+    )
+
+    print(
+        "XMCD definition    : "
+        f"{spectrum_definitions['xmcd_definition']}"
+    )
+
+    print(
+        "XAS features       : "
+        f"{spectrum_definitions['n_xas']}"
+    )
+
+    print(
+        "XMCD features      : "
+        f"{spectrum_definitions['n_xmcd']}"
+    )
+
+    print(
+        "External field     : "
+        f"{field_from_loader['magnitude_t']:.6f} T"
+    )
+
+    print(
+        "Field direction    : "
+        f"{field_from_loader['direction']}"
+    )
+
+    print(
+        "Field is NN input  : False"
+    )
+
+    print(
+        f"Input dimension    : {model.n_in}"
+    )
+
+    print(
+        f"Maximum epochs     : {maximum_epochs}"
+    )
+
+    print(
+        "=" * 80
+    )
+
+    # --------------------------------------------------------
+    # Training loop
+    # --------------------------------------------------------
+
+    for epoch in range(
+        maximum_epochs
+    ):
+        train_result = run_epoch(
+            model=model,
+            loader=loader_bundle[
+                "train_loader"
+            ],
+            loss_function=loss_function,
+            per_sample_loss=per_sample_loss,
+            batch_reduction=batch_reduction,
+            device=device,
+            dtype=dtype,
+            optimizer=optimizer,
+            gradient_clip_norm=gradient_clip_norm,
+        )
+
+        validation_result = run_epoch(
+            model=model,
+            loader=loader_bundle[
+                "validation_loader"
+            ],
+            loss_function=loss_function,
+            per_sample_loss=per_sample_loss,
+            batch_reduction=batch_reduction,
+            device=device,
+            dtype=dtype,
+        )
+
+        train_loss = train_result[
+            "mean_per_sample_loss"
+        ]
+
+        validation_loss = validation_result[
+            "mean_per_sample_loss"
+        ]
+
+        improved = (
+            best_epoch is None
+            or validation_loss
+            < best_loss
+            - minimum_delta
+        )
+
+        if improved:
+            best_loss = validation_loss
+
+            best_epoch = epoch
+
+            patience_counter = 0
+
+            if save_best:
+                save_checkpoint(
+                    path=best_checkpoint,
+                    model=model,
+                    optimizer=optimizer,
+                    epoch=epoch,
+                    validation_loss=validation_loss,
+                    config=config,
+                    repository_root=repository_root,
+                    config_path=config_path,
+                    dataset_file=dataset_file,
+                    cpu_threads=cpu_threads,
+                    external_field=field_from_loader,
+                    spectrum_definitions=spectrum_definitions,
+                )
+
+        else:
+            patience_counter += 1
+
+        history.append(
             {
-                "target": str(
-                    target_name
-                ),
+                "epoch": epoch,
 
-                "count": (
-                    target_metrics[
-                        "count"
+                "train_loss": train_loss,
+
+                "validation_loss": validation_loss,
+
+                "train_samples_seen": train_result[
+                    "processed_samples"
+                ],
+
+                "validation_samples_seen": validation_result[
+                    "processed_samples"
+                ],
+
+                "mean_gradient_norm_before_clipping": (
+                    train_result[
+                        "mean_gradient_norm_before_clipping"
                     ]
                 ),
 
-                "sse": (
-                    target_metrics[
-                        "sse"
+                "maximum_gradient_norm_before_clipping": (
+                    train_result[
+                        "maximum_gradient_norm_before_clipping"
                     ]
                 ),
 
-                "sst": (
-                    target_metrics[
-                        "sst"
-                    ]
-                ),
+                "best_validation_loss_so_far": best_loss,
 
-                "mse": (
-                    target_metrics[
-                        "mse"
-                    ]
-                ),
+                "best_epoch_so_far": best_epoch,
 
-                "rmse": (
-                    target_metrics[
-                        "rmse"
-                    ]
-                ),
+                "patience_counter": patience_counter,
 
-                "nrmse_by_target_std": (
-                    target_metrics[
-                        "nrmse_by_target_std"
-                    ]
-                ),
-
-                "mae": (
-                    target_metrics[
-                        "mae"
-                    ]
-                ),
-
-                "bias": (
-                    target_metrics[
-                        "bias"
-                    ]
-                ),
-
-                "residual_mean": (
-                    target_metrics[
-                        "residual_mean"
-                    ]
-                ),
-
-                "residual_std_population": (
-                    target_metrics[
-                        "residual_std_population"
-                    ]
-                ),
-
-                "residual_min": (
-                    target_metrics[
-                        "residual_min"
-                    ]
-                ),
-
-                "residual_max": (
-                    target_metrics[
-                        "residual_max"
-                    ]
-                ),
-
-                "r2_coefficient_of_determination": (
-                    target_metrics[
-                        "r2_coefficient_of_determination"
-                    ]
-                ),
-
-                "pearson_r": (
-                    target_metrics[
-                        "pearson_r"
-                    ]
-                ),
-
-                "pearson_correlation_squared": (
-                    target_metrics[
-                        "pearson_correlation_squared"
-                    ]
-                ),
+                "improved": improved,
             }
         )
 
-    pd.DataFrame(
-        residual_rows
-    ).to_csv(
-        residual_summary_file,
-        index=False,
-        quoting=csv.QUOTE_MINIMAL,
+        if (
+            epoch % 20 == 0
+            or epoch == maximum_epochs - 1
+            or improved
+        ):
+            print(
+                f"Epoch {epoch:4d} | "
+                f"train={train_loss:.6e} | "
+                f"val={validation_loss:.6e} | "
+                f"best={best_loss:.6e}"
+            )
+
+        if (
+            early_enabled
+            and patience_counter >= patience
+        ):
+            stopped_early = True
+
+            print(
+                "Early stopping triggered at "
+                f"epoch {epoch}"
+            )
+
+            break
+
+    # --------------------------------------------------------
+    # Final checkpoint selection
+    # --------------------------------------------------------
+
+    elapsed_seconds = float(
+        time.perf_counter()
+        - start_time
+    )
+
+    if not history:
+        raise RuntimeError(
+            "Training completed without epochs"
+        )
+
+    save_checkpoint(
+        path=final_checkpoint,
+        model=model,
+        optimizer=optimizer,
+        epoch=history[
+            -1
+        ][
+            "epoch"
+        ],
+        validation_loss=history[
+            -1
+        ][
+            "validation_loss"
+        ],
+        config=config,
+        repository_root=repository_root,
+        config_path=config_path,
+        dataset_file=dataset_file,
+        cpu_threads=cpu_threads,
+        external_field=field_from_loader,
+        spectrum_definitions=spectrum_definitions,
+    )
+
+    if restore_best:
+        if not best_checkpoint.is_file():
+            raise RuntimeError(
+                "No best checkpoint exists"
+            )
+
+        best_checkpoint_data = load_checkpoint(
+            best_checkpoint,
+            device,
+        )
+
+        model.load_state_dict(
+            best_checkpoint_data[
+                "model_state_dict"
+            ],
+            strict=True,
+        )
+
+        shutil.copy2(
+            best_checkpoint,
+            selected_checkpoint,
+        )
+
+        selected_source = "best"
+
+    else:
+        shutil.copy2(
+            final_checkpoint,
+            selected_checkpoint,
+        )
+
+        selected_source = "final"
+
+    # --------------------------------------------------------
+    # Save history and configuration
+    # --------------------------------------------------------
+
+    with history_file.open(
+        "w",
+        encoding="utf-8",
+        newline="",
+    ) as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=list(
+                history[
+                    0
+                ].keys()
+            ),
+        )
+
+        writer.writeheader()
+
+        writer.writerows(
+            history
+        )
+
+    write_json(
+        config_copy,
+        public_config_copy(
+            config
+        ),
     )
 
     # --------------------------------------------------------
-    # Checkpoint metadata
+    # Training summary
     # --------------------------------------------------------
 
-    if isinstance(
-        checkpoint,
-        dict,
-    ):
-        checkpoint_epoch = (
-            checkpoint.get(
-                "epoch"
-            )
-        )
+    summary = {
+        "created_at_utc": utc_now_iso(),
 
-        checkpoint_validation_loss = (
-            checkpoint.get(
-                "validation_loss"
-            )
-        )
+        "system": config[
+            "system"
+        ],
 
-    else:
-        checkpoint_epoch = None
-        checkpoint_validation_loss = None
-
-    # --------------------------------------------------------
-    # Evaluation audit summary
-    # --------------------------------------------------------
-
-    evaluation_summary = {
-        "created_at_utc": (
-            utc_now_iso()
+        "config_file": safe_public_path(
+            config_path,
+            repository_root,
         ),
 
-        "system": (
-            config["system"]
+        "config_sha256": sha256_file(
+            config_path
         ),
 
-        "evaluation_subset": (
-            "complete saved test subset"
+        "preprocessed_dataset_npz": safe_public_path(
+            dataset_file,
+            repository_root,
         ),
 
-        "model_mode": (
-            "evaluation"
+        "preprocessed_dataset_sha256": sha256_file(
+            dataset_file
         ),
 
-        "dropout_active": False,
+        "spectrum_definitions": {
+            "xas": spectrum_definitions[
+                "xas_definition"
+            ],
 
-        "batch_normalization_mode": (
-            "evaluation"
+            "xmcd": spectrum_definitions[
+                "xmcd_definition"
+            ],
+
+            "xas_right_suffix": spectrum_definitions[
+                "xas_right_suffix"
+            ],
+
+            "xas_left_suffix": spectrum_definitions[
+                "xas_left_suffix"
+            ],
+
+            "xmcd_suffix": spectrum_definitions[
+                "xmcd_suffix"
+            ],
+
+            "n_xas": spectrum_definitions[
+                "n_xas"
+            ],
+
+            "n_xmcd": spectrum_definitions[
+                "n_xmcd"
+            ],
+
+            "total_input_features": spectrum_definitions[
+                "total_input_features"
+            ],
+
+            "feature_order": spectrum_definitions[
+                "feature_order"
+            ],
+
+            "target_order": spectrum_definitions[
+                "target_order"
+            ],
+
+            "external_field_is_model_input": False,
+
+            "validated_against_preprocessed_dataset": True,
+        },
+
+        "external_magnetic_field": (
+            field_from_loader
         ),
 
         "device": str(
             device
         ),
 
-        "dtype": (
-            dtype_name
+        "dtype": dtype_name,
+
+        "cpu_threads": cpu_threads,
+
+        "random_seed": random_seed,
+
+        "deterministic_algorithms": deterministic,
+
+        "model": model.configuration(),
+
+        "parameter_counts": model.parameter_counts(),
+
+        "data_loader": dataloader_summary(
+            loader_bundle
         ),
 
-        "target_order": (
-            target_names.tolist()
-        ),
+        "optimizer": optimizer_effective,
 
-        "inverse_transform": (
-            "Y_physical = "
-            "Y_standardized * "
-            "Y_std_safe + Y_mean"
-        ),
+        "loss": loss_effective,
 
-        "metric_definitions": {
-            "residual": (
-                "y_pred - y_true"
+        "training": {
+            "maximum_epochs": maximum_epochs,
+
+            "epochs_completed": len(
+                history
             ),
 
-            "sse": (
-                "sum((y_pred-y_true)^2)"
-            ),
+            "last_epoch": history[
+                -1
+            ][
+                "epoch"
+            ],
 
-            "sst": (
-                "sum((y_true-mean(y_true))^2)"
-            ),
+            "gradient_clip_norm": gradient_clip_norm,
 
-            "r2": (
-                "1 - SSE/SST"
-            ),
+            "stopped_early": stopped_early,
 
-            "nrmse": (
-                "RMSE/std_population(y_true)"
-            ),
+            "best_epoch": best_epoch,
+
+            "best_validation_loss": best_loss,
+
+            "elapsed_seconds": elapsed_seconds,
         },
 
-        "prediction_count": int(
-            len(
-                saved_predictions
-            )
-        ),
+        "early_stopping": {
+            "enabled": early_enabled,
 
-        "metrics_calculated_from": (
-            safe_public_path(
-                predictions_file,
+            "monitor": "validation_loss",
+
+            "mode": "min",
+
+            "patience": patience,
+
+            "minimum_delta": minimum_delta,
+
+            "restore_best_weights": restore_best,
+        },
+
+        "checkpoints": {
+            "best": (
+                safe_public_path(
+                    best_checkpoint,
+                    repository_root,
+                )
+                if best_checkpoint.is_file()
+                else None
+            ),
+
+            "final": safe_public_path(
+                final_checkpoint,
                 repository_root,
-            )
-        ),
-
-        "checkpoint_epoch": (
-            checkpoint_epoch
-        ),
-
-        "checkpoint_validation_loss": (
-            checkpoint_validation_loss
-        ),
-
-        "files": {
-            "config": (
-                safe_public_path(
-                    config_path,
-                    repository_root,
-                )
             ),
 
-            "preprocessed_dataset": (
-                safe_public_path(
-                    preprocessed_file,
-                    repository_root,
-                )
-            ),
-
-            "scaler": (
-                safe_public_path(
-                    scaler_file,
-                    repository_root,
-                )
-            ),
-
-            "selected_checkpoint": (
+            "selected_for_evaluation_and_figures": (
                 safe_public_path(
                     selected_checkpoint,
                     repository_root,
                 )
             ),
 
-            "accepted_metadata": (
-                safe_public_path(
-                    accepted_metadata_file,
-                    repository_root,
-                )
-                if accepted_metadata_file
-                is not None
-                else None
+            "selected_source": selected_source,
+
+            "selected_sha256": sha256_file(
+                selected_checkpoint
+            ),
+        },
+
+        "files": {
+            "history_csv": safe_public_path(
+                history_file,
+                repository_root,
             ),
 
-            "predictions_csv": (
-                safe_public_path(
-                    predictions_file,
-                    repository_root,
-                )
+            "summary_json": safe_public_path(
+                summary_file,
+                repository_root,
             ),
 
-            "metrics_json": (
-                safe_public_path(
-                    metrics_file,
-                    repository_root,
-                )
-            ),
-
-            "residual_summary_csv": (
-                safe_public_path(
-                    residual_summary_file,
-                    repository_root,
-                )
-            ),
-
-            "evaluation_summary_json": (
-                safe_public_path(
-                    evaluation_summary_file,
-                    repository_root,
-                )
+            "training_config_copy": safe_public_path(
+                config_copy,
+                repository_root,
             ),
         },
 
         "sha256": {
-            "config": (
-                sha256_file(
-                    config_path
-                )
+            "history_csv": sha256_file(
+                history_file
             ),
 
-            "preprocessed_dataset": (
-                sha256_file(
-                    preprocessed_file
-                )
+            "training_config_copy": sha256_file(
+                config_copy
             ),
 
-            "scaler": (
-                sha256_file(
-                    scaler_file
-                )
+            "final_checkpoint": sha256_file(
+                final_checkpoint
             ),
 
-            "selected_checkpoint": (
-                sha256_file(
-                    selected_checkpoint
-                )
-            ),
-
-            "predictions_csv": (
-                sha256_file(
-                    predictions_file
-                )
-            ),
-
-            "metrics_json": (
-                sha256_file(
-                    metrics_file
-                )
-            ),
-
-            "residual_summary_csv": (
-                sha256_file(
-                    residual_summary_file
-                )
+            "selected_checkpoint": sha256_file(
+                selected_checkpoint
             ),
         },
 
         "software": software_versions(
             {
-                "pandas": (
-                    pd.__version__
-                ),
+                "torch": torch.__version__,
 
-                "torch": (
-                    torch.__version__
-                ),
-
-                "cuda_version": (
-                    torch.version.cuda
-                ),
+                "cuda_version": torch.version.cuda,
             }
         ),
     }
 
     write_json(
-        evaluation_summary_file,
-        evaluation_summary,
+        summary_file,
+        summary,
     )
 
     # --------------------------------------------------------
-    # Console report
+    # Final report
     # --------------------------------------------------------
 
-    print("=" * 80)
-
     print(
-        f"System          : {system_name}"
+        "=" * 80
     )
 
     print(
-        f"Device          : {device}"
+        "Training completed"
     )
 
     print(
-        f"Test samples    : {len(saved_predictions)}"
-    )
-
-    for target_name in target_names:
-        target_metrics = (
-            metrics_physical[
-                "per_target"
-            ][
-                str(target_name)
-            ]
-        )
-
-        r2_value = target_metrics[
-            "r2_coefficient_of_determination"
-        ]
-
-        nrmse_value = target_metrics[
-            "nrmse_by_target_std"
-        ]
-
-        print(
-            f"{target_name} RMSE       : "
-            f"{target_metrics['rmse']:.8e}"
-        )
-
-        if nrmse_value is None:
-            print(
-                f"{target_name} NRMSE      : undefined"
-            )
-
-        else:
-            print(
-                f"{target_name} NRMSE      : "
-                f"{nrmse_value:.8e}"
-            )
-
-        print(
-            f"{target_name} SSE        : "
-            f"{target_metrics['sse']:.8e}"
-        )
-
-        print(
-            f"{target_name} SST        : "
-            f"{target_metrics['sst']:.8e}"
-        )
-
-        if r2_value is None:
-            print(
-                f"{target_name} R2         : undefined"
-            )
-
-        else:
-            print(
-                f"{target_name} R2         : "
-                f"{r2_value:.8f}"
-            )
-
-    print(
-        "Predictions     : "
-        f"{safe_public_path(predictions_file, repository_root)}"
+        "XAS definition      : "
+        f"{spectrum_definitions['xas_definition']}"
     )
 
     print(
-        "Metrics         : "
-        f"{safe_public_path(metrics_file, repository_root)}"
+        "XMCD definition     : "
+        f"{spectrum_definitions['xmcd_definition']}"
     )
 
     print(
-        "Residual summary: "
-        f"{safe_public_path(residual_summary_file, repository_root)}"
+        "Field is NN input   : False"
     )
 
     print(
-        "Summary         : "
-        f"{safe_public_path(evaluation_summary_file, repository_root)}"
+        f"Epochs completed    : {len(history)}"
     )
 
-    print("=" * 80)
+    print(
+        f"Best epoch          : {best_epoch}"
+    )
+
+    print(
+        "Best validation loss: "
+        f"{best_loss:.8e}"
+    )
+
+    print(
+        "Selected checkpoint : "
+        f"{safe_public_path(selected_checkpoint, repository_root)}"
+    )
+
+    print(
+        "History             : "
+        f"{safe_public_path(history_file, repository_root)}"
+    )
+
+    print(
+        "Summary             : "
+        f"{safe_public_path(summary_file, repository_root)}"
+    )
+
+    print(
+        "=" * 80
+    )
 
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(
+        main()
+    )

@@ -1,4 +1,14 @@
 {
+  "external_magnetic_field": {
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
+  },
   "model": {
     "bias_initialization": "zeros",
     "class_name": "MultiOutputNN",
@@ -16,13 +26,18 @@
     "weight_initialization": "kaiming_normal"
   },
   "paths": {
-    "accepted_metadata_csv": "../../data/processed/Co_d7_accepted.csv",
+    "accepted_metadata_csv": "../../data/processed/Co_d7/Co_d7_accepted.csv",
     "model_output_directory": "../../models/Co_d7",
-    "preprocessed_dataset_npz": "../../data/preprocessed/Co_d7_preprocessed.npz",
+    "preprocessed_dataset_npz": "../../data/preprocessed/Co_d7/Co_d7_preprocessed.npz",
     "repository_root": "../..",
     "result_output_directory": "../../results/Co_d7",
-    "scalers_npz": "../../data/preprocessed/Co_d7_scalers.npz",
+    "scalers_npz": "../../data/preprocessed/Co_d7/Co_d7_scalers.npz",
     "selected_model_checkpoint": "../../models/Co_d7/selected_model.pt"
+  },
+  "spectrum": {
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd_suffix": "_cd.spec"
   },
   "system": {
     "element": "Co",
@@ -35,8 +50,8 @@
       "save_best": true
     },
     "cpu_threads": {
-      "interop_threads": "auto",
-      "num_threads": "auto",
+      "interop_threads": 1,
+      "num_threads": 1,
       "warn_on_oversubscription": true
     },
     "data_loader": {

@@ -1,21 +1,40 @@
 {
   "batch_normalization_mode": "evaluation",
-  "checkpoint_epoch": 63,
-  "checkpoint_validation_loss": 0.003075048465419699,
-  "created_at_utc": "2026-10-15T05:49:39.553886+00:00",
+  "checkpoint_epoch": 67,
+  "checkpoint_validation_loss": 0.0018797805779194705,
+  "created_at_utc": "2026-10-19T07:13:51.567656+00:00",
   "device": "cpu",
   "dropout_active": false,
   "dtype": "float32",
   "evaluation_subset": "complete saved test subset",
+  "external_magnetic_field": {
+    "consistent_across_config_dataset_scaler_checkpoint_and_predictions": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "test_field_summary_t": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "tolerance_t": 1e-09
+  },
   "files": {
-    "accepted_metadata": "data/processed/Co_d7_accepted.csv",
+    "accepted_metadata": "data/processed/Co_d7/Co_d7_accepted.csv",
     "config": "configs/training/Co_d7.json",
     "evaluation_summary_json": "results/Co_d7/evaluation_summary.json",
     "metrics_json": "results/Co_d7/metrics.json",
     "predictions_csv": "results/Co_d7/predictions.csv",
-    "preprocessed_dataset": "data/preprocessed/Co_d7_preprocessed.npz",
+    "preprocessed_dataset": "data/preprocessed/Co_d7/Co_d7_preprocessed.npz",
     "residual_summary_csv": "results/Co_d7/residual_summary.csv",
-    "scaler": "data/preprocessed/Co_d7_scalers.npz",
+    "scaler": "data/preprocessed/Co_d7/Co_d7_scalers.npz",
     "selected_checkpoint": "models/Co_d7/selected_model.pt"
   },
   "inverse_transform": "Y_physical = Y_standardized * Y_std_safe + Y_mean",
@@ -28,29 +47,29 @@
   },
   "metrics_calculated_from": "results/Co_d7/predictions.csv",
   "model_mode": "evaluation",
-  "prediction_count": 486,
+  "prediction_count": 567,
   "sha256": {
-    "config": "a18dcba45564c7f0e1ecf4878ee9a7c4318b591e3444c48b1fefe6ae6a09d0d4",
-    "metrics_json": "76ff0cab82ede3853ca398705fc1fc308b5e9cd7a9e395bbb299e7da327eaaac",
-    "predictions_csv": "3f2a61155eabcf9682b746748b52b72c49c7f56239726cbfcf09126d1ed62e02",
-    "preprocessed_dataset": "a1ec048dd4756421fd1f0c96571fa2e5fcc5aef3315597f8b7204c4fbbf4c5e6",
-    "residual_summary_csv": "c4ae304f349e7c8afb09e7fabcf86391f7d8cd5eef5fd3bbe50d70a337e9c2aa",
-    "scaler": "8ef907000a342a4acec34458aceb06964180c6ae78216f44a1e9deef7c1f57cb",
-    "selected_checkpoint": "577be2f66f43b2c44b5cf0d6ee82b557ee5e4a6682a8a5293d5626d3f16a6a79"
+    "config": "efdfd9c4f5372d832dfda6582de2028f15a0c137acbec00decd2ee1500bb1e4a",
+    "metrics_json": "0c7604dbc457975d4f1a415a522dc1b4e8511161b77dc4b521ecc4be9ea36a52",
+    "predictions_csv": "d1b6c4f4a4d71e42e529ad0548b8a26f7dd50a0b988d2f3ad396809dad298595",
+    "preprocessed_dataset": "f7ac9d3521756a1a3c695445e33af6a8173255d95e86fcbe87c59e5387c3132b",
+    "residual_summary_csv": "74ac05a2756e1108939a12aa8f05b34c57fee2c0c37050b8e82b1d7ccd11f7de",
+    "scaler": "dd01b656cf3dee4e4a59fe037033b998d1008db80c2abfd5dad582d0fc7aa470",
+    "selected_checkpoint": "db0ed52102a7d8dc14a683ae05c1cbcea912d7c2d05ffb93842c6b3fa171e590"
   },
   "software": {
     "cuda_available": false,
-    "cuda_version": "12.4",
+    "cuda_version": "13.0",
     "cudnn_available": true,
-    "cudnn_version": 90100,
+    "cudnn_version": 92400,
     "machine": "x86_64",
     "mps_available": false,
     "numpy": "2.4.6",
-    "pandas": "3.0.6",
-    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "pandas": "2.3.3",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
     "python": "3.11.17",
     "python_implementation": "CPython",
-    "torch": "2.5.1"
+    "torch": "2.14.1+cu130"
   },
   "system": {
     "element": "Co",

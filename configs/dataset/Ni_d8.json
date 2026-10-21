@@ -10,31 +10,33 @@
 
     "spec_directory": "../../quanty/runs/Ni_d8/spec",
 
-    "quanty_results_csv": "../../quanty/runs/quanty_results_Ni_d8.csv",
+    "quanty_results_csv": "../../quanty/runs/Ni_d8/metadata/quanty_results_Ni_d8.csv",
 
-    "output_directory": "../../data/processed",
+    "output_directory": "../../data/processed/Ni_d8",
 
-    "prepared_dataset_npz": "../../data/processed/Ni_d8_dataset.npz",
+    "prepared_dataset_npz": "../../data/processed/Ni_d8/Ni_d8_dataset.npz",
 
-    "accepted_metadata_csv": "../../data/processed/Ni_d8_accepted.csv",
+    "accepted_metadata_csv": "../../data/processed/Ni_d8/Ni_d8_accepted.csv",
 
-    "split_output_directory": "../../data/splits",
+    "split_output_directory": "../../data/splits/Ni_d8",
 
-    "split_indices_npz": "../../data/splits/Ni_d8_split_indices.npz",
+    "split_indices_npz": "../../data/splits/Ni_d8/Ni_d8_split_indices.npz",
 
-    "split_csv": "../../data/splits/Ni_d8_split.csv",
+    "split_csv": "../../data/splits/Ni_d8/Ni_d8_split.csv",
 
-    "preprocess_output_directory": "../../data/preprocessed",
+    "preprocess_output_directory": "../../data/preprocessed/Ni_d8",
 
-    "preprocessed_dataset_npz": "../../data/preprocessed/Ni_d8_preprocessed.npz",
+    "preprocessed_dataset_npz": "../../data/preprocessed/Ni_d8/Ni_d8_preprocessed.npz",
 
-    "scalers_npz": "../../data/preprocessed/Ni_d8_scalers.npz",
+    "scalers_npz": "../../data/preprocessed/Ni_d8/Ni_d8_scalers.npz",
 
-    "audit_output_directory": "../../results/audit"
+    "audit_output_directory": "../../results/audit/Ni_d8"
   },
 
   "spectrum": {
-    "xas_suffix": "_k.spec",
+    "xas_right_suffix": "_r.spec",
+
+    "xas_left_suffix": "_l.spec",
 
     "xmcd_suffix": "_cd.spec",
 
@@ -58,11 +60,27 @@
 
     "sz": "Sz",
 
-    "lz": "Lz"
+    "lz": "Lz",
+
+    "b_ext_t": "B_ext_T"
+  },
+
+  "external_magnetic_field": {
+    "enabled": true,
+
+    "magnitude_t": 2.0,
+
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+
+    "tolerance_t": 1e-9
   },
 
   "exclusion": {
-    "exclude_both_moments_zero": true,
+    "exclude_both_moments_zero": false,
 
     "zero_tolerance": 1e-6
   },
@@ -97,7 +115,8 @@
       "SlaterScale",
       "SOC_2p",
       "SOC_3d",
-      "H_ex"
+      "H_ex",
+      "B_ext_T"
     ],
 
     "parameter_round_decimals": 12,

@@ -11,6 +11,19 @@
   "output_directory": "../runs/Co_d7",
   "spec_source_directory": "../runs",
 
+  "external_magnetic_field": {
+    "enabled": true,
+    "magnitude_t": 2.0,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "orbital_g_factor": 1.0,
+    "spin_g_factor": 2.0,
+    "bohr_magneton_ev_per_t": 5.788381806e-5
+  },
+
   "parameters": {
     "ten_dq": {
       "type": "linspace",
@@ -53,11 +66,15 @@
     "slater": 4,
     "soc_2p": 4,
     "soc_3d": 4,
-    "h_ex": 6
+    "h_ex": 6,
+    "b_ext_t": 3
   },
 
   "scale_slater_3d_from": "slater",
   "scale_slater_2p3d_from": "slater",
 
-  "expected_minimum_spec_files": 1
+  "expected_minimum_spec_files": 4,
+
+  "parallel_workers": 16,
+  "quanty_threads_per_process": 1
 }

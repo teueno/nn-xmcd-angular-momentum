@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 -- Quanty input file TEMPLATE for XMCD + NN dataset generation
 -- Ni L2,3 XAS, Oh symmetry
+-- External magnetic field: B_ext = 2 T along +z
 --------------------------------------------------------------------------------
 
 -- ---------- Parameters injected from Python (DO NOT EDIT) ----------
@@ -15,7 +16,17 @@ SCALE_SOC_2P       = __SCALE_SOC_2P__
 
 H_EX               = __H_EX__
 
-Prefix             = "__PREFIX__"
+-- ---------- External magnetic field ----------
+-- The static external magnetic field is applied along +z.
+B_EXT_T             = 2.0
+MU_B_EV_PER_T       = 5.7883818060e-5
+G_ORBITAL           = 1.0
+G_SPIN              = 2.0
+
+-- Add the external-field condition to the output prefix to prevent
+-- accidental mixing with spectra calculated without the Zeeman term.
+PrefixBase          = "__PREFIX__"
+Prefix              = PrefixBase .. string.format("__Bext%.3fT", B_EXT_T)
 
 -- ---------- General settings ----------
 Verbosity(0x0000)
@@ -44,9 +55,10 @@ DenseBorder = 2000
 ShiftSpectra = true
 
 -- ---------- Hamiltonian toggles ----------
-AtomicTerm        = true
-CrystalFieldTerm  = true
+AtomicTerm = true
+CrystalFieldTerm = true
 ExchangeFieldTerm = true
+ExternalMagneticFieldTerm = true
 
 -- ---------- Basis ----------
 NBosons = 0
@@ -76,21 +88,21 @@ F2_3d_3d = NewOperator("U", NFermions, IndexUp_3d, IndexDn_3d, {0,1,0})
 F4_3d_3d = NewOperator("U", NFermions, IndexUp_3d, IndexDn_3d, {0,0,1})
 
 F0_2p_3d = NewOperator("U", NFermions, IndexUp_2p, IndexDn_2p,
-                       IndexUp_3d, IndexDn_3d, {1,0},{0,0})
+                                 IndexUp_3d, IndexDn_3d, {1,0},{0,0})
 F2_2p_3d = NewOperator("U", NFermions, IndexUp_2p, IndexDn_2p,
-                       IndexUp_3d, IndexDn_3d, {0,1},{0,0})
+                                 IndexUp_3d, IndexDn_3d, {0,1},{0,0})
 G1_2p_3d = NewOperator("U", NFermions, IndexUp_2p, IndexDn_2p,
-                       IndexUp_3d, IndexDn_3d, {0,0},{1,0})
+                                 IndexUp_3d, IndexDn_3d, {0,0},{1,0})
 G3_2p_3d = NewOperator("U", NFermions, IndexUp_2p, IndexDn_2p,
-                       IndexUp_3d, IndexDn_3d, {0,0},{0,1})
+                                 IndexUp_3d, IndexDn_3d, {0,0},{0,1})
 
--- Hartree–Fock values for Ni (from Crispy)
+-- Hartree-Fock values for Ni (from Crispy)
 F2_3d_3d_i = 12.2338 * SCALE_SLATER_3D
-F4_3d_3d_i = 7.5975  * SCALE_SLATER_3D
+F4_3d_3d_i =  7.5975 * SCALE_SLATER_3D
 F0_3d_3d_i = 2/63 * (F2_3d_3d_i + F4_3d_3d_i)
 
 F2_3d_3d_f = 13.0058 * SCALE_SLATER_3D
-F4_3d_3d_f = 8.0839  * SCALE_SLATER_3D
+F4_3d_3d_f =  8.0839 * SCALE_SLATER_3D
 F0_3d_3d_f = 2/63 * (F2_3d_3d_f + F4_3d_3d_f)
 
 F2_2p_3d_f = 7.7213 * SCALE_SLATER_2P3D
@@ -99,22 +111,22 @@ G3_2p_3d_f = 3.2909 * SCALE_SLATER_2P3D
 F0_2p_3d_f = 1/15 * G1_2p_3d_f + 3/70 * G3_2p_3d_f
 
 H_i = H_i + Chop(
-  F0_3d_3d_i * F0_3d_3d +
-  F2_3d_3d_i * F2_3d_3d +
-  F4_3d_3d_i * F4_3d_3d
+    F0_3d_3d_i * F0_3d_3d +
+    F2_3d_3d_i * F2_3d_3d +
+    F4_3d_3d_i * F4_3d_3d
 )
 
 H_f = H_f + Chop(
-  F0_3d_3d_f * F0_3d_3d +
-  F2_3d_3d_f * F2_3d_3d +
-  F4_3d_3d_f * F4_3d_3d +
-  F0_2p_3d_f * F0_2p_3d +
-  F2_2p_3d_f * F2_2p_3d +
-  G1_2p_3d_f * G1_2p_3d +
-  G3_2p_3d_f * G3_2p_3d
+    F0_3d_3d_f * F0_3d_3d +
+    F2_3d_3d_f * F2_3d_3d +
+    F4_3d_3d_f * F4_3d_3d +
+    F0_2p_3d_f * F0_2p_3d +
+    F2_2p_3d_f * F2_2p_3d +
+    G1_2p_3d_f * G1_2p_3d +
+    G3_2p_3d_f * G3_2p_3d
 )
 
--- ---------- Spin–orbit coupling ----------
+-- ---------- Spin-orbit coupling ----------
 ldots_3d = NewOperator("ldots", NFermions, IndexUp_3d, IndexDn_3d)
 ldots_2p = NewOperator("ldots", NFermions, IndexUp_2p, IndexDn_2p)
 
@@ -126,22 +138,66 @@ H_i = H_i + Chop(zeta_3d_i * ldots_3d)
 H_f = H_f + Chop(zeta_3d_f * ldots_3d + zeta_2p_f * ldots_2p)
 
 -- ---------- Crystal field ----------
-Akm = {{4,0,2.1},{4,-4,1.5*math.sqrt(0.7)},{4,4,1.5*math.sqrt(0.7)}}
+Akm = {{4,0,2.1},{4,-4,1.5*sqrt(0.7)},{4,4,1.5*sqrt(0.7)}}
 tenDq_3d = NewOperator("CF", NFermions, IndexUp_3d, IndexDn_3d, Akm)
 
 H_i = H_i + Chop(TEN_DQ * tenDq_3d)
 H_f = H_f + Chop(TEN_DQ * tenDq_3d)
 
 -- ---------- Angular momentum operators ----------
-Sz   = NewOperator("Sz",   NFermions, IndexUp_3d, IndexDn_3d)
-Lz   = NewOperator("Lz",   NFermions, IndexUp_3d, IndexDn_3d)
-Ssqr = NewOperator("Ssqr", NFermions, IndexUp_3d, IndexDn_3d)
-Lsqr = NewOperator("Lsqr", NFermions, IndexUp_3d, IndexDn_3d)
-Jsqr = NewOperator("Jsqr", NFermions, IndexUp_3d, IndexDn_3d)
+-- The 3d-shell operators define the NN labels.
+Sz_3d   = NewOperator("Sz",   NFermions, IndexUp_3d, IndexDn_3d)
+Lz_3d   = NewOperator("Lz",   NFermions, IndexUp_3d, IndexDn_3d)
+Ssqr_3d = NewOperator("Ssqr", NFermions, IndexUp_3d, IndexDn_3d)
+Lsqr_3d = NewOperator("Lsqr", NFermions, IndexUp_3d, IndexDn_3d)
+Jsqr_3d = NewOperator("Jsqr", NFermions, IndexUp_3d, IndexDn_3d)
+
+-- The 2p-shell operators are required for the core-excited-state
+-- Zeeman interaction. Their initial-state contribution vanishes for 2p6.
+Sz_2p = NewOperator("Sz", NFermions, IndexUp_2p, IndexDn_2p)
+Lz_2p = NewOperator("Lz", NFermions, IndexUp_2p, IndexDn_2p)
+
+-- Keep the original short names for label evaluation below.
+Sz   = Sz_3d
+Lz   = Lz_3d
+Ssqr = Ssqr_3d
+Lsqr = Lsqr_3d
+Jsqr = Jsqr_3d
 
 -- ---------- Exchange field ----------
-H_i = H_i + Chop(H_EX * Sz)
-H_f = H_f + Chop(H_EX * Sz)
+-- The existing effective exchange-field term is retained separately from
+-- the external Zeeman term. Positive H_EX lowers negative Sz_3d states.
+if ExchangeFieldTerm then
+    H_i = H_i + Chop(H_EX * Sz_3d)
+    H_f = H_f + Chop(H_EX * Sz_3d)
+end
+
+-- ---------- External magnetic field ----------
+-- For an electron, mu = -mu_B (L + g_s S). Therefore, for B along +z,
+-- H_Z = -mu . B = +mu_B B (g_L Lz + g_s Sz).
+--
+-- The final state explicitly includes both the 2p and 3d shells. The
+-- initial 2p6 shell has zero net Lz and Sz but is retained for symmetry.
+if ExternalMagneticFieldTerm then
+    ZeemanEnergy = MU_B_EV_PER_T * B_EXT_T
+
+    H_Z_i = ZeemanEnergy * (
+        G_ORBITAL * Lz_2p +
+        G_SPIN    * Sz_2p +
+        G_ORBITAL * Lz_3d +
+        G_SPIN    * Sz_3d
+    )
+
+    H_Z_f = ZeemanEnergy * (
+        G_ORBITAL * Lz_2p +
+        G_SPIN    * Sz_2p +
+        G_ORBITAL * Lz_3d +
+        G_SPIN    * Sz_3d
+    )
+
+    H_i = H_i + Chop(H_Z_i)
+    H_f = H_f + Chop(H_Z_f)
+end
 
 -- ---------- Restrictions ----------
 InitialRestrictions = {
@@ -149,7 +205,6 @@ InitialRestrictions = {
   {"111111 0000000000", NElectrons_2p, NElectrons_2p},
   {"000000 1111111111", NElectrons_3d, NElectrons_3d}
 }
-
 
 --------------------------------------------------------------------------------
 -- ================= Helper Functions =================
@@ -207,7 +262,6 @@ function WavefunctionsAndBoltzmannFactors(H, NPsis, NPsisAuto, Temperature, Thre
     return Psis, dZ
 end
 
-
 function SaveSpectrum(G, Filename, Gaussian, Lorentzian, Pcl)
     if Pcl == nil then
         Pcl = 1
@@ -241,7 +295,11 @@ end
 --------------------------------------------------------------------------------
 -- Save results to quanty_results.csv (with header)
 --------------------------------------------------------------------------------
-local result_file = "quanty_results_Ni_d8.csv"
+local result_file = string.format(
+    "quanty_results_Ni_d8_Bext%.3fT.csv",
+    B_EXT_T
+)
+
 local write_header = false
 local fcheck = io.open(result_file, "r")
 if fcheck == nil then
@@ -254,15 +312,26 @@ local meta = io.open(result_file, "a")
 if meta then
     if write_header then
         meta:write(
-            "Prefix,NElectrons_3d,TEN_DQ,SlaterScale,SOC_2p,SOC_3d,H_ex,"
-            .. "Sz,Lz,S2,L2,J2\n"
+            "Prefix,NElectrons_3d,TEN_DQ,SlaterScale,SOC_2p,SOC_3d,"
+            .. "H_ex,B_ext_T,Sz,Lz,S2,L2,J2\n"
         )
     end
     meta:write(string.format(
-        "%s,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
-        Prefix, NElectrons_3d, TEN_DQ,
-        SCALE_SLATER_3D, SCALE_SOC_2P, SCALE_SOC_3D, H_EX,
-        Sz_avg, Lz_avg, Ssqr_avg, Lsqr_avg, Jsqr_avg
+        "%s,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,"
+        .. "%.6f,%.6f,%.6f,%.6f,%.6f\n",
+        Prefix,
+        NElectrons_3d,
+        TEN_DQ,
+        SCALE_SLATER_3D,
+        SCALE_SOC_2P,
+        SCALE_SOC_3D,
+        H_EX,
+        B_EXT_T,
+        Sz_avg,
+        Lz_avg,
+        Ssqr_avg,
+        Lsqr_avg,
+        Jsqr_avg
     ))
     meta:close()
 end
@@ -337,6 +406,10 @@ for name, ops in pairs(SpectraAndOperators) do
         if name == "Circular Dichroic" then
             Gr = GetSpectrum(G, idx[1], dZspec, #Tlist, #Psis_i)
             Gl = GetSpectrum(G, idx[2], dZspec, #Tlist, #Psis_i)
+
+            -- Save the separate helicity spectra for diagnostic checks.
+            SaveSpectrum(Gr,      Prefix .. "_r",  Gaussian, Lorentzian)
+            SaveSpectrum(Gl,      Prefix .. "_l",  Gaussian, Lorentzian)
             SaveSpectrum(Gr - Gl, Prefix .. "_cd", Gaussian, Lorentzian)
         end
     end

@@ -3,35 +3,38 @@
     "best": "models/Fe_d6/best_model.pt",
     "final": "models/Fe_d6/final_model.pt",
     "selected_for_evaluation_and_figures": "models/Fe_d6/selected_model.pt",
-    "selected_sha256": "697f08cd97303399d3d3268165fb24ae0e38e01251daec19144e322c9ff8480a",
+    "selected_sha256": "d19752af18d4c6bfe977d5a1ffedfa7ea7b2e3ac9c47b1ca21c957408ff2f605",
     "selected_source": "best"
   },
   "config_file": "configs/training/Fe_d6.json",
-  "config_sha256": "a2004253e42932f8717d28848a158a5c1f39d6f3ab36e40c5b0e2a4302868d45",
+  "config_sha256": "943eab0c57a57c7f7f61cf8d16e36ba5a79edd68978ada5e00674e4b29d2441c",
   "cpu_threads": {
-    "automatic_interop_threads": 8,
-    "automatic_num_threads": 64,
-    "available_logical_cpus": 64,
+    "available_logical_cpus": 11,
     "device": "cpu",
-    "effective_interop_threads": 8,
-    "effective_num_threads": 64,
-    "mkl_num_threads": "64",
-    "numexpr_num_threads": "64",
-    "omp_num_threads": "64",
-    "openblas_num_threads": "64",
-    "requested_interop_threads": "auto",
-    "requested_num_threads": "auto"
+    "effective_interop_threads": 1,
+    "effective_num_threads": 1,
+    "requested_interop_threads": 1,
+    "requested_num_threads": 1
   },
-  "created_at_utc": "2026-10-15T07:21:27.757121+00:00",
+  "created_at_utc": "2026-10-20T03:20:21.011529+00:00",
   "data_loader": {
     "device": "cpu",
     "drop_last_evaluation": false,
     "drop_last_training": true,
     "evaluation_batch_size": 64,
+    "external_magnetic_field": {
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "enabled": true,
+      "magnitude_t": 2.0
+    },
     "input_dimension": 4002,
-    "n_test": 486,
-    "n_train": 2268,
-    "n_validation": 486,
+    "n_test": 567,
+    "n_train": 2646,
+    "n_validation": 567,
     "num_workers": 0,
     "output_dimension": 2,
     "pin_memory_effective": false,
@@ -45,13 +48,13 @@
       "Lz"
     ],
     "tensor_dtype": "torch.float32",
-    "test_batches": 8,
-    "test_samples_evaluated": 486,
+    "test_batches": 9,
+    "test_samples_evaluated": 567,
     "train_batch_size": 32,
-    "train_batches_per_epoch": 70,
-    "train_samples_per_epoch": 2240,
-    "validation_batches": 8,
-    "validation_samples_evaluated": 486
+    "train_batches_per_epoch": 82,
+    "train_samples_per_epoch": 2624,
+    "validation_batches": 9,
+    "validation_samples_evaluated": 567
   },
   "deterministic_algorithms": true,
   "device": "cpu",
@@ -63,6 +66,23 @@
     "monitor": "validation_loss",
     "patience": 30,
     "restore_best_weights": true
+  },
+  "environment_threads": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "external_magnetic_field": {
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
   },
   "files": {
     "history_csv": "results/Fe_d6/training_history.csv",
@@ -87,10 +107,17 @@
     "class_name": "MultiOutputNN",
     "dropout_position": "after_first_relu",
     "dropout_rate": 0.1,
+    "external_field_is_model_input": false,
+    "external_field_treatment": "fixed forward-model condition validated outside model.py",
     "hidden_units": [
       256,
       128
     ],
+    "input_channels": [
+      "XAS",
+      "XMCD"
+    ],
+    "input_feature_order": "[XAS channels, XMCD channels]",
     "input_features": 4002,
     "output_activation": null,
     "output_heads": {
@@ -125,25 +152,25 @@
     "total_parameters": 1058690,
     "trainable_parameters": 1058690
   },
-  "preprocessed_dataset_npz": "data/preprocessed/Fe_d6_preprocessed.npz",
-  "preprocessed_dataset_sha256": "aff709bf8a2f746b6fc887b9c06a163b285bc21e5acaea2a463fd1da5aa10593",
+  "preprocessed_dataset_npz": "data/preprocessed/Fe_d6/Fe_d6_preprocessed.npz",
+  "preprocessed_dataset_sha256": "63a1bb37a7be612d29941367e91b6e4845b3f686d91490e734c941adc053e56c",
   "random_seed": 1234,
   "sha256": {
-    "final_checkpoint": "6820ad52c503088a0ffbf03345affaf22f73f7af922720edaccd2a4ef46dbdce",
-    "history_csv": "aec0fd27e84e29e6d0feb417887a17f37733cb0c441ef205207820e05b49c354",
-    "selected_checkpoint": "697f08cd97303399d3d3268165fb24ae0e38e01251daec19144e322c9ff8480a",
-    "training_config_copy": "56954176625cd547dcf3e00305ba321b8ef96459d231b512f8f09237e0e607dd"
+    "final_checkpoint": "992c0c8887311e21cabdbcbd9f8085b6440509136e92b2d6d49a3f1886741cb8",
+    "history_csv": "4808ff9e48f44d9cac38c36d1d9d05b783c858857f8e1d1ece30c70517c755e2",
+    "selected_checkpoint": "d19752af18d4c6bfe977d5a1ffedfa7ea7b2e3ac9c47b1ca21c957408ff2f605",
+    "training_config_copy": "12bd2bb9acbdc008d913ac7534fcf73853e2bc64a0f966eee9542fb7db0b59d3"
   },
   "software": {
     "cuda_available": false,
-    "cuda_version": "12.4",
-    "cudnn_available": true,
-    "cudnn_version": 90100,
-    "machine": "x86_64",
-    "mps_available": false,
-    "numpy": "2.4.6",
-    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
-    "python": "3.11.17",
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
     "python_implementation": "CPython",
     "torch": "2.5.1"
   },
@@ -153,13 +180,17 @@
     "name": "Fe_d6"
   },
   "training": {
-    "best_epoch": 47,
-    "best_validation_loss": 0.0034952700873951852,
-    "elapsed_seconds": 34.50856065400876,
-    "epochs_completed": 78,
+    "best_epoch": 80,
+    "best_validation_loss": 0.0013315801819165547,
+    "elapsed_seconds": 358.41035204101354,
+    "epochs_completed": 111,
     "gradient_clip_norm": 1.0,
-    "last_epoch": 77,
+    "last_epoch": 110,
+    "maximum_epoch_seconds": 11.23475670767948,
     "maximum_epochs": 300,
+    "mean_epoch_seconds": 3.187527085608291,
+    "median_epoch_seconds": 2.877409541979432,
+    "minimum_epoch_seconds": 1.0767781250178814,
     "stopped_early": true
   }
 }

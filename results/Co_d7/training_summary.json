@@ -3,35 +3,38 @@
     "best": "models/Co_d7/best_model.pt",
     "final": "models/Co_d7/final_model.pt",
     "selected_for_evaluation_and_figures": "models/Co_d7/selected_model.pt",
-    "selected_sha256": "577be2f66f43b2c44b5cf0d6ee82b557ee5e4a6682a8a5293d5626d3f16a6a79",
+    "selected_sha256": "dc6c7e5a80c40a033dc05fb3e1f4116990d3c55118a1d2d77fb59fc5a2269690",
     "selected_source": "best"
   },
   "config_file": "configs/training/Co_d7.json",
-  "config_sha256": "a18dcba45564c7f0e1ecf4878ee9a7c4318b591e3444c48b1fefe6ae6a09d0d4",
+  "config_sha256": "a88e53808818041b2bb1991177bd3cc4b3b79f5cbca25d09e757c30dca130d4d",
   "cpu_threads": {
-    "automatic_interop_threads": 8,
-    "automatic_num_threads": 64,
-    "available_logical_cpus": 64,
+    "available_logical_cpus": 11,
     "device": "cpu",
-    "effective_interop_threads": 8,
-    "effective_num_threads": 64,
-    "mkl_num_threads": "64",
-    "numexpr_num_threads": "64",
-    "omp_num_threads": "64",
-    "openblas_num_threads": "64",
-    "requested_interop_threads": "auto",
-    "requested_num_threads": "auto"
+    "effective_interop_threads": 1,
+    "effective_num_threads": 1,
+    "requested_interop_threads": 1,
+    "requested_num_threads": 1
   },
-  "created_at_utc": "2026-10-15T05:48:10.421346+00:00",
+  "created_at_utc": "2026-10-20T03:25:55.866619+00:00",
   "data_loader": {
     "device": "cpu",
     "drop_last_evaluation": false,
     "drop_last_training": true,
     "evaluation_batch_size": 64,
+    "external_magnetic_field": {
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "enabled": true,
+      "magnitude_t": 2.0
+    },
     "input_dimension": 4002,
-    "n_test": 486,
-    "n_train": 2268,
-    "n_validation": 486,
+    "n_test": 567,
+    "n_train": 2646,
+    "n_validation": 567,
     "num_workers": 0,
     "output_dimension": 2,
     "pin_memory_effective": false,
@@ -45,13 +48,13 @@
       "Lz"
     ],
     "tensor_dtype": "torch.float32",
-    "test_batches": 8,
-    "test_samples_evaluated": 486,
+    "test_batches": 9,
+    "test_samples_evaluated": 567,
     "train_batch_size": 32,
-    "train_batches_per_epoch": 70,
-    "train_samples_per_epoch": 2240,
-    "validation_batches": 8,
-    "validation_samples_evaluated": 486
+    "train_batches_per_epoch": 82,
+    "train_samples_per_epoch": 2624,
+    "validation_batches": 9,
+    "validation_samples_evaluated": 567
   },
   "deterministic_algorithms": true,
   "device": "cpu",
@@ -63,6 +66,23 @@
     "monitor": "validation_loss",
     "patience": 30,
     "restore_best_weights": true
+  },
+  "environment_threads": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "external_magnetic_field": {
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
   },
   "files": {
     "history_csv": "results/Co_d7/training_history.csv",
@@ -87,10 +107,17 @@
     "class_name": "MultiOutputNN",
     "dropout_position": "after_first_relu",
     "dropout_rate": 0.1,
+    "external_field_is_model_input": false,
+    "external_field_treatment": "fixed forward-model condition validated outside model.py",
     "hidden_units": [
       256,
       128
     ],
+    "input_channels": [
+      "XAS",
+      "XMCD"
+    ],
+    "input_feature_order": "[XAS channels, XMCD channels]",
     "input_features": 4002,
     "output_activation": null,
     "output_heads": {
@@ -125,25 +152,25 @@
     "total_parameters": 1058690,
     "trainable_parameters": 1058690
   },
-  "preprocessed_dataset_npz": "data/preprocessed/Co_d7_preprocessed.npz",
-  "preprocessed_dataset_sha256": "a1ec048dd4756421fd1f0c96571fa2e5fcc5aef3315597f8b7204c4fbbf4c5e6",
+  "preprocessed_dataset_npz": "data/preprocessed/Co_d7/Co_d7_preprocessed.npz",
+  "preprocessed_dataset_sha256": "7ca8bafce56e226199976eaf9fd9cdd05664cf71e936463ee79d9d4eed767799",
   "random_seed": 1234,
   "sha256": {
-    "final_checkpoint": "0ab5824715c4abadbe9faaa6db5eb66bf4d9dcf087fb3c067356a4db84321487",
-    "history_csv": "fb3ba48eecf4a6075f85aef819b6326348e19d356fa2b8da92e7269ddb4b2198",
-    "selected_checkpoint": "577be2f66f43b2c44b5cf0d6ee82b557ee5e4a6682a8a5293d5626d3f16a6a79",
-    "training_config_copy": "e727f6d8e78327071bf4ea28d147ff87a07ed205406ae61c58a90c5a7d7a7fd6"
+    "final_checkpoint": "1b571f346d26551bd474046250f065e0c0ac54a75f3c0fb52933c080b50decb8",
+    "history_csv": "5142a6c7a2f3bf5b049e05a604d906fdf717d43cdb96936ae7779b1ba6a5b8e3",
+    "selected_checkpoint": "dc6c7e5a80c40a033dc05fb3e1f4116990d3c55118a1d2d77fb59fc5a2269690",
+    "training_config_copy": "ac444a777ab597782a325a32ea0d1c5ad8332292992174bd5747787ec57ed5e1"
   },
   "software": {
     "cuda_available": false,
-    "cuda_version": "12.4",
-    "cudnn_available": true,
-    "cudnn_version": 90100,
-    "machine": "x86_64",
-    "mps_available": false,
-    "numpy": "2.4.6",
-    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
-    "python": "3.11.17",
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
     "python_implementation": "CPython",
     "torch": "2.5.1"
   },
@@ -153,13 +180,17 @@
     "name": "Co_d7"
   },
   "training": {
-    "best_epoch": 63,
-    "best_validation_loss": 0.003075048465419699,
-    "elapsed_seconds": 40.80640490198857,
-    "epochs_completed": 94,
+    "best_epoch": 88,
+    "best_validation_loss": 0.001901546732984102,
+    "elapsed_seconds": 331.0657860827632,
+    "epochs_completed": 119,
     "gradient_clip_norm": 1.0,
-    "last_epoch": 93,
+    "last_epoch": 118,
+    "maximum_epoch_seconds": 4.772728667128831,
     "maximum_epochs": 300,
+    "mean_epoch_seconds": 2.7544830913710245,
+    "median_epoch_seconds": 2.7648750417865813,
+    "minimum_epoch_seconds": 1.0610418329015374,
     "stopped_early": true
   }
 }

@@ -1,0 +1,316 @@
+{
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "7d678fcef0b0513df6f3291694dc5926478712adbb5f12c0c52fa24608dd1ff0",
+  "constant_or_near_constant_features": {
+    "targets_below_epsilon": 0,
+    "xas_below_epsilon": 0,
+    "xmcd_below_epsilon": 0
+  },
+  "counts": {
+    "n_total_features": 4002,
+    "n_xas_features": 2001,
+    "n_xmcd_features": 2001,
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:56.374362+00:00",
+  "external_magnetic_field": {
+    "consistent_across_config_dataset_and_split": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "test": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "tolerance_t": 1e-09,
+    "train": {
+      "count": 2646,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "validation": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    }
+  },
+  "method": {
+    "channel_order": "XAS followed by XMCD",
+    "epsilon": 1e-06,
+    "feature_axis": "energy point within each channel",
+    "fit_statistics_on": "training_only",
+    "input_mode": "channel_wise_feature_standardization",
+    "nonfinite_policy": "error",
+    "population_standard_deviation_ddof": 0,
+    "small_std_replacement": 1.0,
+    "split_seed": 1234,
+    "standardize_inputs": true,
+    "standardize_targets": true,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "nonfinite_replacements": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "output_files": {
+    "preprocessed_npz": "data/preprocessed/Ni_d8/Ni_d8_preprocessed.npz",
+    "scalers_npz": "data/preprocessed/Ni_d8/Ni_d8_scalers.npz",
+    "summary_json": "data/preprocessed/Ni_d8/Ni_d8_preprocess_summary.json"
+  },
+  "output_sha256": {
+    "preprocessed_npz": "c890aa8145f7ae1e789cbcc24d7f763156442c0334bf4bbcc784d081a01b8146",
+    "scalers_npz": "94a3dafe43be6be23f97619682090062764d255a394703d4602b9cdd4ff51571"
+  },
+  "prepared_dataset_npz": "data/processed/Ni_d8/Ni_d8_dataset.npz",
+  "prepared_dataset_sha256": "e6dd5582b6b74ea85fd8b184ed67c0e6c1277b3c354541d668fc45cd39960c63",
+  "raw_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": -0.027557,
+        "mean": -0.23879742151675487,
+        "min": -0.500642,
+        "std_population": 0.10379046834876934
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.188757,
+        "mean": -0.8678785749559081,
+        "min": -0.998527,
+        "std_population": 0.2702785594685659
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": -0.027551,
+        "mean": -0.24360286507936507,
+        "min": -0.500642,
+        "std_population": 0.10813232073925728
+      },
+      "Sz": {
+        "count": 2646,
+        "max": -0.188741,
+        "mean": -0.8590559773242631,
+        "min": -0.998527,
+        "std_population": 0.27484409013973626
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": -0.027557,
+        "mean": -0.2404699700176367,
+        "min": -0.50059,
+        "std_population": 0.1026681506387159
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.188757,
+        "mean": -0.8649388483245151,
+        "min": -0.998497,
+        "std_population": 0.26904705482293917
+      }
+    }
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_nonfinite_values": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "spectrum_definitions": {
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "validated_against_prepared_dataset": true,
+    "xas": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "split_indices_npz": "data/splits/Ni_d8/Ni_d8_split_indices.npz",
+  "split_indices_sha256": "f202188800687d8c0a9b8b23e6cbe0472f8ba18af2e23cfff52e068c800a8096",
+  "standardized_array_summary": {
+    "X_test": {
+      "dtype": "float64",
+      "max": 6.56123657837944,
+      "mean": 0.021213635604377612,
+      "min": -8.465880673974088,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.0311227931143958
+    },
+    "X_train": {
+      "dtype": "float64",
+      "max": 6.3492401778233685,
+      "mean": -6.146370748452793e-18,
+      "min": -8.377676488853137,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        4002
+      ],
+      "std_population": 0.9999999999999998
+    },
+    "X_validation": {
+      "dtype": "float64",
+      "max": 6.5314956396897355,
+      "mean": 0.015693353971925905,
+      "min": -7.568863242142463,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.01416886307639
+    },
+    "Y_test": {
+      "dtype": "float64",
+      "max": 2.438833510967875,
+      "mean": 0.006170013714231573,
+      "min": -2.3770796110114083,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.972442409194689
+    },
+    "Y_train": {
+      "dtype": "float64",
+      "max": 2.4388917257906564,
+      "mean": 3.2976057426810396e-15,
+      "min": -2.3770796110114083,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        2
+      ],
+      "std_population": 1.0000000000000004
+    },
+    "Y_validation": {
+      "dtype": "float64",
+      "max": 2.438833510967875,
+      "mean": 0.0037841985406987686,
+      "min": -2.376598718715335,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.9646291076366321
+    }
+  },
+  "standardized_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": 1.9979767714439753,
+        "mean": 0.044440399778325854,
+        "min": -2.3770796110114083,
+        "std_population": 0.959846858360161
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.438833510967875,
+        "mean": -0.03210037234986272,
+        "min": -0.5074550542630433,
+        "std_population": 0.9833886525671739
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": 1.998032259016599,
+        "mean": 4.812141279221842e-15,
+        "min": -2.3770796110114083,
+        "std_population": 1.0000000000000002
+      },
+      "Sz": {
+        "count": 2646,
+        "max": 2.4388917257906564,
+        "mean": 1.7938115929242135e-15,
+        "min": -0.5074550542630433,
+        "std_population": 1.0000000000000007
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": 1.9979767714439753,
+        "mean": 0.028972790376739988,
+        "min": -2.376598718715335,
+        "std_population": 0.9494677441195656
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.438833510967875,
+        "mean": -0.021404393295342446,
+        "min": -0.5073459014703279,
+        "std_population": 0.9789079135234469
+      }
+    }
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  },
+  "training_transform_checks": {
+    "maximum_absolute_training_feature_mean": 3.2671857996404783e-14,
+    "training_target_mean": [
+      1.7618182045539686e-15,
+      4.8484563974309535e-15
+    ],
+    "training_target_std_population": [
+      1.000000000000001,
+      0.9999999999999992
+    ]
+  }
+}

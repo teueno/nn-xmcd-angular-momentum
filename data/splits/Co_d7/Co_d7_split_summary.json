@@ -1,0 +1,160 @@
+{
+  "accepted_metadata_csv": "data/processed/Co_d7/Co_d7_accepted.csv",
+  "accepted_metadata_sha256": "ae88320b29f1f69a0058e57edc977104ebc68199d91ab3b0af7c2ca60beccd8b",
+  "config_file": "configs/dataset/Co_d7.json",
+  "config_sha256": "e854b1c19cf9904de118e02f8b157519d64af44419c3310f37102147b9c97803",
+  "counts": {
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:33.903575+00:00",
+  "external_magnetic_field": {
+    "complete_consistency_check": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
+  },
+  "integrity_checks": {
+    "complete_dataset_coverage": true,
+    "cross_subset_sample_id_overlap": {
+      "train_test": 0,
+      "train_validation": 0,
+      "validation_test": 0
+    },
+    "duplicate_prefix_rows": 0,
+    "duplicate_sample_id_rows": 0,
+    "external_field_consistent_across_all_samples": true,
+    "unique_dataset_indices": true,
+    "unique_sample_ids": true
+  },
+  "output_files": {
+    "split_csv": "data/splits/Co_d7/Co_d7_split.csv",
+    "split_indices_npz": "data/splits/Co_d7/Co_d7_split_indices.npz",
+    "summary_json": "data/splits/Co_d7/Co_d7_split_summary.json"
+  },
+  "output_sha256": {
+    "split_csv": "1918ffa53f68ffcabe46fc407f19ba7c3200ccf7c74b62e4554dd7f069778fa8",
+    "split_indices_npz": "eee07f19e621f7b1febc1e0761f8b53328e58a6f64147ee8c173978f59f51558"
+  },
+  "prepared_dataset_npz": "data/processed/Co_d7/Co_d7_dataset.npz",
+  "prepared_dataset_sha256": "4ed1a1bc81746f76b629fa772d6ed8173ff498d09c0c23cae5b396b88b5f09b4",
+  "random_number_generator": "numpy.random.default_rng",
+  "random_seed": 1234,
+  "ratios": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "rounding_rule": {
+    "test": "N - n_train - n_validation",
+    "train": "int(train_ratio * N)",
+    "validation": "int(validation_ratio * N)"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "split_method": "random permutation without replacement",
+  "subsets": {
+    "test": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.161495,
+          "mean": -0.6888904656084656,
+          "min": -0.991033,
+          "std_population": 0.22470830842719977
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.246448,
+          "mean": -0.8740320158730158,
+          "min": -1.12002,
+          "std_population": 0.25739584410196087
+        }
+      }
+    },
+    "train": {
+      "count": 2646,
+      "external_field_t": {
+        "count": 2646,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 2646,
+          "max": -0.161495,
+          "mean": -0.6800790570672715,
+          "min": -1.00622,
+          "std_population": 0.22825350504447753
+        },
+        "sz_label": {
+          "count": 2646,
+          "max": -0.246448,
+          "mean": -0.8629157955404385,
+          "min": -1.127053,
+          "std_population": 0.26137355267072004
+        }
+      }
+    },
+    "validation": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.163244,
+          "mean": -0.6881574902998236,
+          "min": -1.003711,
+          "std_population": 0.22624322303157224
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.246682,
+          "mean": -0.8723900229276895,
+          "min": -1.127053,
+          "std_population": 0.25845729639328313
+        }
+      }
+    }
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "audit_status": "pass",
+  "config_file": "configs/dataset/Fe_d6.json",
+  "config_sha256": "cd19cf974c2014305514795900db0f677466f90c3a53e577d5336239ac42dca5",
+  "counts": {
+    "features": 4002,
+    "samples": 3780,
+    "test": 567,
+    "train": 2646,
+    "unique_prefixes": 3780,
+    "unique_sample_ids": 3780,
+    "validation": 567,
+    "xas_features": 2001,
+    "xmcd_features": 2001
+  },
+  "created_at_utc": "2026-10-20T02:42:23.732237+00:00",
+  "external_magnetic_field": {
+    "accepted_field_summary_t": {
+      "count": 3780,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "consistent_across_config_npz_metadata_and_split": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
+  },
+  "failure_reasons": [],
+  "input_files": {
+    "accepted_metadata_csv": "data/processed/Fe_d6/Fe_d6_accepted.csv",
+    "prepared_dataset_npz": "data/processed/Fe_d6/Fe_d6_dataset.npz",
+    "split_csv": "data/splits/Fe_d6/Fe_d6_split.csv"
+  },
+  "input_sha256": {
+    "accepted_metadata_csv": "e87803c4e52e0cf05260af67927082ebd0a495c35170f2db410e0f962b539729",
+    "prepared_dataset_npz": "65841624c7fdeb30106c42517cdf185a64b8608e47a31917614dd28f585ad6e3",
+    "split_csv": "90cf21f33b75c5ea2ce1f761551da32532729ea9e940a559e087b27494ea68c5"
+  },
+  "label_consistency": {
+    "exact_input_different_label_groups": 0,
+    "rounded_input_different_label_groups": 0,
+    "tolerance": 1e-12
+  },
+  "output_files": {
+    "duplicate_groups_csv": "results/audit/Fe_d6/Fe_d6_duplicate_groups.csv",
+    "summary_json": "results/audit/Fe_d6/Fe_d6_audit_summary.json"
+  },
+  "parameter_audit": {
+    "columns": [
+      "TEN_DQ",
+      "SlaterScale",
+      "SOC_2p",
+      "SOC_3d",
+      "H_ex",
+      "B_ext_T"
+    ],
+    "cross_split_groups": 0,
+    "cross_split_rows": 0,
+    "duplicate_groups": 0,
+    "duplicate_rows": 0,
+    "round_decimals": 12
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "spectrum_audit": {
+    "exact_cross_split_groups": 0,
+    "exact_cross_split_rows": 0,
+    "exact_duplicate_groups": 0,
+    "exact_duplicate_rows": 0,
+    "hash_input": "complete concatenated input vector [XAS, XMCD]",
+    "rounded_cross_split_groups": 0,
+    "rounded_cross_split_rows": 0,
+    "rounded_decimals": 12,
+    "rounded_duplicate_groups": 0,
+    "rounded_duplicate_rows": 0
+  },
+  "spectrum_definitions": {
+    "consistent_across_config_npz_and_metadata": true,
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "xas": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "system": {
+    "element": "Fe",
+    "n_electrons_3d": 6,
+    "name": "Fe_d6"
+  }
+}

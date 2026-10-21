@@ -1,0 +1,316 @@
+{
+  "config_file": "configs/dataset/Co_d7.json",
+  "config_sha256": "e854b1c19cf9904de118e02f8b157519d64af44419c3310f37102147b9c97803",
+  "constant_or_near_constant_features": {
+    "targets_below_epsilon": 0,
+    "xas_below_epsilon": 0,
+    "xmcd_below_epsilon": 0
+  },
+  "counts": {
+    "n_total_features": 4002,
+    "n_xas_features": 2001,
+    "n_xmcd_features": 2001,
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:44.062036+00:00",
+  "external_magnetic_field": {
+    "consistent_across_config_dataset_and_split": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "test": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "tolerance_t": 1e-09,
+    "train": {
+      "count": 2646,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "validation": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    }
+  },
+  "method": {
+    "channel_order": "XAS followed by XMCD",
+    "epsilon": 1e-06,
+    "feature_axis": "energy point within each channel",
+    "fit_statistics_on": "training_only",
+    "input_mode": "channel_wise_feature_standardization",
+    "nonfinite_policy": "error",
+    "population_standard_deviation_ddof": 0,
+    "small_std_replacement": 1.0,
+    "split_seed": 1234,
+    "standardize_inputs": true,
+    "standardize_targets": true,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "nonfinite_replacements": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "output_files": {
+    "preprocessed_npz": "data/preprocessed/Co_d7/Co_d7_preprocessed.npz",
+    "scalers_npz": "data/preprocessed/Co_d7/Co_d7_scalers.npz",
+    "summary_json": "data/preprocessed/Co_d7/Co_d7_preprocess_summary.json"
+  },
+  "output_sha256": {
+    "preprocessed_npz": "7ca8bafce56e226199976eaf9fd9cdd05664cf71e936463ee79d9d4eed767799",
+    "scalers_npz": "61383f7d916f2d48b547afe30672e7fcc78eea4fee32ddf869152e27b7c83430"
+  },
+  "prepared_dataset_npz": "data/processed/Co_d7/Co_d7_dataset.npz",
+  "prepared_dataset_sha256": "4ed1a1bc81746f76b629fa772d6ed8173ff498d09c0c23cae5b396b88b5f09b4",
+  "raw_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": -0.161495,
+        "mean": -0.6888904656084657,
+        "min": -0.991033,
+        "std_population": 0.22470830842719977
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.246448,
+        "mean": -0.8740320158730159,
+        "min": -1.12002,
+        "std_population": 0.25739584410196087
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": -0.161495,
+        "mean": -0.6800790570672713,
+        "min": -1.00622,
+        "std_population": 0.22825350504447753
+      },
+      "Sz": {
+        "count": 2646,
+        "max": -0.246448,
+        "mean": -0.8629157955404385,
+        "min": -1.127053,
+        "std_population": 0.2613735526707201
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": -0.163244,
+        "mean": -0.6881574902998236,
+        "min": -1.003711,
+        "std_population": 0.22624322303157224
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.246682,
+        "mean": -0.8723900229276895,
+        "min": -1.127053,
+        "std_population": 0.25845729639328313
+      }
+    }
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_nonfinite_values": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "spectrum_definitions": {
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "validated_against_prepared_dataset": true,
+    "xas": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "split_indices_npz": "data/splits/Co_d7/Co_d7_split_indices.npz",
+  "split_indices_sha256": "eee07f19e621f7b1febc1e0761f8b53328e58a6f64147ee8c173978f59f51558",
+  "standardized_array_summary": {
+    "X_test": {
+      "dtype": "float64",
+      "max": 7.069893556162721,
+      "mean": 0.01012781101497139,
+      "min": -6.356820930966133,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.0307592343568157
+    },
+    "X_train": {
+      "dtype": "float64",
+      "max": 6.9787255781006285,
+      "mean": 5.749138053792962e-17,
+      "min": -6.065344317498383,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        4002
+      ],
+      "std_population": 1.0
+    },
+    "X_validation": {
+      "dtype": "float64",
+      "max": 7.0122109111255915,
+      "mean": 0.0006995133097853639,
+      "min": -5.641903834308313,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.0323623678421339
+    },
+    "Y_test": {
+      "dtype": "float64",
+      "max": 2.358569905950165,
+      "mean": -0.04056680936191463,
+      "min": -1.3623183699726111,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.9846268095643017
+    },
+    "Y_train": {
+      "dtype": "float64",
+      "max": 2.358569905950165,
+      "mean": 6.388439789770515e-15,
+      "min": -1.428854040463369,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        2
+      ],
+      "std_population": 1.0
+    },
+    "Y_validation": {
+      "dtype": "float64",
+      "max": 2.3576746355694813,
+      "mean": -0.035820107876526064,
+      "min": -1.4178618762926107,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.9900184594334328
+    }
+  },
+  "standardized_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": 2.2719653613477733,
+        "mean": -0.03860360671997737,
+        "min": -1.3623183699726111,
+        "std_population": 0.9844681613253347
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.358569905950165,
+        "mean": -0.04253001200385189,
+        "min": -0.9836657222295961,
+        "std_population": 0.9847815185273532
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": 2.2719653613477733,
+        "mean": 3.845416468663883e-15,
+        "min": -1.428854040463369,
+        "std_population": 1.0
+      },
+      "Sz": {
+        "count": 2646,
+        "max": 2.358569905950165,
+        "mean": 8.939519150965131e-15,
+        "min": -1.0105735708934596,
+        "std_population": 0.9999999999999998
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": 2.2643028284124775,
+        "mean": -0.035392373190401775,
+        "min": -1.4178618762926107,
+        "std_population": 0.9911927660759753
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.3576746355694813,
+        "mean": -0.036247842562650366,
+        "min": -1.0105735708934596,
+        "std_population": 0.9888425732150837
+      }
+    }
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  },
+  "training_transform_checks": {
+    "maximum_absolute_training_feature_mean": 7.062327543130293e-14,
+    "training_target_mean": [
+      8.920155283774484e-15,
+      3.854552941211583e-15
+    ],
+    "training_target_std_population": [
+      0.9999999999999996,
+      1.0000000000000002
+    ]
+  }
+}

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
-"""
-Prepare a neural-network dataset from Quanty XAS/XMCD spectra.
+"""Prepare a neural-network dataset from Quanty XAS/XMCD spectra.
+
+This version validates and records a fixed external magnetic field.
 
 Outputs
 -------
 <system>_dataset.npz
-    X, Y, sample IDs, prefixes, and energy axes.
+    X, Y, sample IDs, prefixes, energy axes, spectrum definitions,
+    and external-field metadata.
 
 <system>_metadata.csv
     Complete audit table containing all source samples.
@@ -18,13 +20,17 @@ Outputs
     Excluded samples and their exclusion reasons.
 
 <system>_summary.json
-    Counts, label ranges, file hashes, and software versions.
+    Counts, label ranges, spectrum definitions, field conditions,
+    hashes, and software versions.
 
-Privacy
--------
-Internal calculations use absolute paths. Paths written to public
-JSON and CSV files and displayed in normal console output are converted
-to paths relative to the repository root.
+Learning inputs
+---------------
+    XAS  = (I_r + I_l) / 2
+    XMCD = I_r - I_l, read from *_cd.spec
+
+The external magnetic field is validated as a fixed calculation
+condition. It is recorded in the outputs but is not appended to
+the neural-network input vector.
 """
 
 import argparse
@@ -34,15 +40,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-
-# Support both:
-#
-#   python src/prepare_dataset.py
-#
-# and:
-#
-#   python -m src.prepare_dataset
 
 try:
     from .utils import (
@@ -76,14 +73,14 @@ except ImportError:
 
 
 # ============================================================
-# Command-line arguments
+# Arguments
 # ============================================================
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description=(
-            "Prepare an XAS/XMCD neural-network dataset "
-            "from Quanty outputs."
+            "Prepare an external-field-aware XAS/XMCD dataset "
+            "using XAS = (I_r + I_l) / 2."
         )
     )
 
@@ -104,20 +101,14 @@ def parse_arguments():
 
 
 # ============================================================
-# Public-path utility
+# Public path handling
 # ============================================================
 
 def safe_public_path(
     path,
     repository_root,
 ):
-    """
-    Return a public-safe path.
-
-    Paths inside the repository are displayed relative to the
-    repository root. If a path is outside the repository, only
-    its final file or directory name is returned.
-    """
+    """Return a public-safe repository-relative path."""
 
     if path is None:
         return None
@@ -135,32 +126,32 @@ def safe_public_path(
 
 
 # ============================================================
-# Configuration validation
+# Numeric validation
 # ============================================================
 
 def validate_nonnegative_integer(
     name,
     value,
 ):
-    """
-    Validate a nonnegative integer configuration value.
-    """
+    """Validate a nonnegative integer."""
 
-    if isinstance(
-        value,
-        bool,
-    ):
-        raise TypeError(
-            f"{name} must be an integer, not bool"
+    if (
+        isinstance(
+            value,
+            bool,
         )
-
-    if not isinstance(
-        value,
-        int,
+        or not isinstance(
+            value,
+            int,
+        )
     ):
         raise TypeError(
             f"{name} must be an integer"
         )
+
+    value = int(
+        value
+    )
 
     if value < 0:
         raise ValueError(
@@ -174,9 +165,7 @@ def validate_nonnegative_float(
     name,
     value,
 ):
-    """
-    Validate a finite nonnegative floating-point value.
-    """
+    """Validate a finite, nonnegative numeric value."""
 
     if isinstance(
         value,
@@ -199,27 +188,27 @@ def validate_nonnegative_float(
             f"{name} must be numeric"
         ) from exception
 
-    if not np.isfinite(
-        result
+    if (
+        not np.isfinite(
+            result
+        )
+        or result < 0.0
     ):
         raise ValueError(
-            f"{name} must be finite"
-        )
-
-    if result < 0.0:
-        raise ValueError(
-            f"{name} must be nonnegative"
+            f"{name} must be finite and nonnegative"
         )
 
     return result
 
 
+# ============================================================
+# Configuration validation
+# ============================================================
+
 def validate_config(
     config,
 ):
-    """
-    Validate the required dataset configuration.
-    """
+    """Validate and normalize the dataset configuration."""
 
     if not isinstance(
         config,
@@ -235,6 +224,7 @@ def validate_config(
         "spectrum",
         "columns",
         "exclusion",
+        "external_magnetic_field",
     )
 
     missing_sections = [
@@ -248,6 +238,21 @@ def validate_config(
             "Missing configuration sections: "
             f"{missing_sections}"
         )
+
+    for section_name in required_sections:
+        if not isinstance(
+            config[
+                section_name
+            ],
+            dict,
+        ):
+            raise TypeError(
+                f"{section_name} must be a dictionary"
+            )
+
+    # --------------------------------------------------------
+    # System
+    # --------------------------------------------------------
 
     required_system_settings = (
         "name",
@@ -267,69 +272,6 @@ def validate_config(
         raise ValueError(
             "Missing system settings: "
             f"{missing_system_settings}"
-        )
-
-    required_paths = (
-        "repository_root",
-        "spec_directory",
-        "quanty_results_csv",
-        "output_directory",
-    )
-
-    missing_path_settings = [
-        setting
-        for setting in required_paths
-        if setting not in config[
-            "paths"
-        ]
-    ]
-
-    if missing_path_settings:
-        raise ValueError(
-            "Missing path settings: "
-            f"{missing_path_settings}"
-        )
-
-    required_spectrum_settings = (
-        "xas_suffix",
-        "xmcd_suffix",
-        "skip_header",
-        "energy_column",
-        "value_column",
-    )
-
-    missing_spectrum_settings = [
-        setting
-        for setting in required_spectrum_settings
-        if setting not in config[
-            "spectrum"
-        ]
-    ]
-
-    if missing_spectrum_settings:
-        raise ValueError(
-            "Missing spectrum settings: "
-            f"{missing_spectrum_settings}"
-        )
-
-    required_column_settings = (
-        "prefix",
-        "sz",
-        "lz",
-    )
-
-    missing_column_settings = [
-        setting
-        for setting in required_column_settings
-        if setting not in config[
-            "columns"
-        ]
-    ]
-
-    if missing_column_settings:
-        raise ValueError(
-            "Missing column settings: "
-            f"{missing_column_settings}"
         )
 
     system_name = str(
@@ -367,6 +309,110 @@ def validate_config(
         ],
     )
 
+    # --------------------------------------------------------
+    # Paths
+    # --------------------------------------------------------
+
+    required_path_settings = (
+        "repository_root",
+        "spec_directory",
+        "quanty_results_csv",
+        "output_directory",
+    )
+
+    missing_path_settings = [
+        setting
+        for setting in required_path_settings
+        if setting not in config[
+            "paths"
+        ]
+    ]
+
+    if missing_path_settings:
+        raise ValueError(
+            "Missing path settings: "
+            f"{missing_path_settings}"
+        )
+
+    # --------------------------------------------------------
+    # Spectrum
+    # --------------------------------------------------------
+
+    required_spectrum_settings = (
+        "xas_right_suffix",
+        "xas_left_suffix",
+        "xmcd_suffix",
+        "skip_header",
+        "energy_column",
+        "value_column",
+    )
+
+    missing_spectrum_settings = [
+        setting
+        for setting in required_spectrum_settings
+        if setting not in config[
+            "spectrum"
+        ]
+    ]
+
+    if missing_spectrum_settings:
+        raise ValueError(
+            "Missing spectrum settings: "
+            f"{missing_spectrum_settings}. "
+            "XAS requires xas_right_suffix and "
+            "xas_left_suffix."
+        )
+
+    right_suffix = str(
+        config[
+            "spectrum"
+        ][
+            "xas_right_suffix"
+        ]
+    ).strip()
+
+    left_suffix = str(
+        config[
+            "spectrum"
+        ][
+            "xas_left_suffix"
+        ]
+    ).strip()
+
+    xmcd_suffix = str(
+        config[
+            "spectrum"
+        ][
+            "xmcd_suffix"
+        ]
+    ).strip()
+
+    spectrum_suffixes = (
+        right_suffix,
+        left_suffix,
+        xmcd_suffix,
+    )
+
+    if any(
+        not suffix
+        for suffix in spectrum_suffixes
+    ):
+        raise ValueError(
+            "Spectrum suffixes must not be empty"
+        )
+
+    if len(
+        set(
+            spectrum_suffixes
+        )
+    ) != len(
+        spectrum_suffixes
+    ):
+        raise ValueError(
+            "Right-XAS, left-XAS, and XMCD suffixes "
+            "must be different"
+        )
+
     skip_header = validate_nonnegative_integer(
         "spectrum.skip_header",
         config[
@@ -394,16 +440,6 @@ def validate_config(
         ],
     )
 
-    zero_tolerance = validate_nonnegative_float(
-        "exclusion.zero_tolerance",
-        config[
-            "exclusion"
-        ].get(
-            "zero_tolerance",
-            1.0e-6,
-        ),
-    )
-
     energy_rtol = validate_nonnegative_float(
         "spectrum.energy_rtol",
         config[
@@ -424,51 +460,77 @@ def validate_config(
         ),
     )
 
-    xas_suffix = str(
-        config[
-            "spectrum"
-        ][
-            "xas_suffix"
-        ]
+    require_equal_length = config[
+        "spectrum"
+    ].get(
+        "require_equal_length",
+        True,
     )
 
-    xmcd_suffix = str(
-        config[
-            "spectrum"
-        ][
-            "xmcd_suffix"
-        ]
+    require_same_energy_grid = config[
+        "spectrum"
+    ].get(
+        "require_same_energy_grid",
+        True,
     )
 
-    if not xas_suffix:
-        raise ValueError(
-            "spectrum.xas_suffix must not be empty"
+    if not isinstance(
+        require_equal_length,
+        bool,
+    ):
+        raise TypeError(
+            "spectrum.require_equal_length "
+            "must be true or false"
         )
 
-    if not xmcd_suffix:
-        raise ValueError(
-            "spectrum.xmcd_suffix must not be empty"
+    if not isinstance(
+        require_same_energy_grid,
+        bool,
+    ):
+        raise TypeError(
+            "spectrum.require_same_energy_grid "
+            "must be true or false"
         )
 
-    if xas_suffix == xmcd_suffix:
+    # --------------------------------------------------------
+    # Columns
+    # --------------------------------------------------------
+
+    required_column_settings = (
+        "prefix",
+        "sz",
+        "lz",
+        "b_ext_t",
+    )
+
+    missing_column_settings = [
+        setting
+        for setting in required_column_settings
+        if setting not in config[
+            "columns"
+        ]
+    ]
+
+    if missing_column_settings:
         raise ValueError(
-            "XAS and XMCD suffixes must differ"
+            "Missing column settings: "
+            f"{missing_column_settings}"
         )
 
-    column_values = [
+    column_names = [
         str(
             config[
                 "columns"
             ][
                 setting
             ]
-        )
+        ).strip()
         for setting in required_column_settings
     ]
 
     if any(
-        not value
-        for value in column_values
+        not column_name
+        for column_name in column_names
     ):
         raise ValueError(
             "Column names must not be empty"
@@ -476,48 +538,173 @@ def validate_config(
 
     if len(
         set(
-            column_values
+            column_names
         )
-    ) != len(column_values):
+    ) != len(
+        column_names
+    ):
         raise ValueError(
-            "Prefix, Sz, and Lz columns "
-            "must have different names"
+            "Prefix, Sz, Lz, and B_ext_T columns "
+            "must be different"
+        )
+
+    # --------------------------------------------------------
+    # Exclusion
+    # --------------------------------------------------------
+
+    zero_tolerance = validate_nonnegative_float(
+        "exclusion.zero_tolerance",
+        config[
+            "exclusion"
+        ].get(
+            "zero_tolerance",
+            1.0e-6,
+        ),
+    )
+
+    exclude_both_zero = config[
+        "exclusion"
+    ].get(
+        "exclude_both_moments_zero",
+        False,
+    )
+
+    if not isinstance(
+        exclude_both_zero,
+        bool,
+    ):
+        raise TypeError(
+            "exclusion.exclude_both_moments_zero "
+            "must be true or false"
+        )
+
+    # --------------------------------------------------------
+    # External magnetic field
+    # --------------------------------------------------------
+
+    field = config[
+        "external_magnetic_field"
+    ]
+
+    required_field_settings = (
+        "enabled",
+        "magnitude_t",
+        "direction",
+    )
+
+    missing_field_settings = [
+        setting
+        for setting in required_field_settings
+        if setting not in field
+    ]
+
+    if missing_field_settings:
+        raise ValueError(
+            "Missing external-field settings: "
+            f"{missing_field_settings}"
+        )
+
+    if not isinstance(
+        field[
+            "enabled"
+        ],
+        bool,
+    ):
+        raise TypeError(
+            "external_magnetic_field.enabled "
+            "must be true or false"
+        )
+
+    field_magnitude_t = validate_nonnegative_float(
+        "external_magnetic_field.magnitude_t",
+        field[
+            "magnitude_t"
+        ],
+    )
+
+    field_tolerance_t = validate_nonnegative_float(
+        "external_magnetic_field.tolerance_t",
+        field.get(
+            "tolerance_t",
+            1.0e-9,
+        ),
+    )
+
+    field_direction = np.asarray(
+        field[
+            "direction"
+        ],
+        dtype=np.float64,
+    )
+
+    if field_direction.shape != (
+        3,
+    ):
+        raise ValueError(
+            "external_magnetic_field.direction "
+            "must contain exactly three values"
+        )
+
+    ensure_finite(
+        "External magnetic-field direction",
+        field_direction,
+    )
+
+    direction_norm = float(
+        np.linalg.norm(
+            field_direction
+        )
+    )
+
+    if direction_norm <= 0.0:
+        raise ValueError(
+            "external_magnetic_field.direction "
+            "must be nonzero"
+        )
+
+    field_direction = (
+        field_direction
+        / direction_norm
+    )
+
+    if (
+        not field[
+            "enabled"
+        ]
+        and not np.isclose(
+            field_magnitude_t,
+            0.0,
+            rtol=0.0,
+            atol=field_tolerance_t,
+        )
+    ):
+        raise ValueError(
+            "external_magnetic_field.magnitude_t "
+            "must be zero when enabled is false"
         )
 
     return {
-        "system_name": (
-            system_name
-        ),
-        "element_name": (
-            element_name
-        ),
-        "n_electrons_3d": (
-            n_electrons_3d
-        ),
-        "skip_header": (
-            skip_header
-        ),
-        "energy_column": (
-            energy_column
-        ),
-        "value_column": (
-            value_column
-        ),
-        "zero_tolerance": (
-            zero_tolerance
-        ),
-        "energy_rtol": (
-            energy_rtol
-        ),
-        "energy_atol": (
-            energy_atol
-        ),
-        "xas_suffix": (
-            xas_suffix
-        ),
-        "xmcd_suffix": (
-            xmcd_suffix
-        ),
+        "system_name": system_name,
+        "element_name": element_name,
+        "n_electrons_3d": n_electrons_3d,
+        "xas_right_suffix": right_suffix,
+        "xas_left_suffix": left_suffix,
+        "xmcd_suffix": xmcd_suffix,
+        "skip_header": skip_header,
+        "energy_column": energy_column,
+        "value_column": value_column,
+        "energy_rtol": energy_rtol,
+        "energy_atol": energy_atol,
+        "require_equal_length": require_equal_length,
+        "require_same_energy_grid": require_same_energy_grid,
+        "exclude_both_moments_zero": exclude_both_zero,
+        "zero_tolerance": zero_tolerance,
+        "external_field_enabled": field[
+            "enabled"
+        ],
+        "external_field_magnitude_t": field_magnitude_t,
+        "external_field_tolerance_t": field_tolerance_t,
+        "external_field_direction": field_direction.tolist(),
     }
 
 
@@ -531,31 +718,7 @@ def load_spectrum(
     energy_column,
     value_column,
 ):
-    """
-    Read a Quanty .spec file.
-
-    Rows containing NaN or Inf in any column are removed. The
-    number of removed rows is returned for auditing.
-
-    Parameters
-    ----------
-    path : Path
-        Spectrum file.
-
-    skip_header : int
-        Number of initial lines to skip.
-
-    energy_column : int
-        Zero-based energy-column index.
-
-    value_column : int
-        Zero-based spectral-value-column index.
-
-    Returns
-    -------
-    tuple
-        energy, values, removed_nonfinite_row_count
-    """
+    """Load one Quanty spectrum file."""
 
     path = Path(
         path
@@ -563,7 +726,8 @@ def load_spectrum(
 
     if not path.is_file():
         raise FileNotFoundError(
-            "Spectrum file was not found"
+            "Spectrum file was not found: "
+            f"{path.name}"
         )
 
     raw = np.genfromtxt(
@@ -573,14 +737,13 @@ def load_spectrum(
         dtype=np.float64,
     )
 
-    if raw.size == 0:
+    if (
+        raw.size == 0
+        or raw.ndim == 0
+    ):
         raise ValueError(
-            "Empty spectrum"
-        )
-
-    if raw.ndim == 0:
-        raise ValueError(
-            "Spectrum contains no tabular data"
+            "Empty or invalid spectrum: "
+            f"{path.name}"
         )
 
     if raw.ndim == 1:
@@ -589,41 +752,47 @@ def load_spectrum(
             -1,
         )
 
-    if raw.ndim != 2:
-        raise ValueError(
-            "Spectrum data must be two-dimensional"
-        )
-
     required_column = max(
         energy_column,
         value_column,
     )
 
-    if raw.shape[1] <= required_column:
+    if (
+        raw.ndim != 2
+        or raw.shape[
+            1
+        ] <= required_column
+    ):
         raise ValueError(
-            f"Requested column {required_column}, "
-            f"but the spectrum contains only "
-            f"{raw.shape[1]} columns"
+            f"Requested column {required_column}; "
+            f"spectrum shape is {raw.shape}"
         )
 
-    finite_row_mask = np.isfinite(
+    finite_mask = np.isfinite(
         raw
     ).all(
         axis=1
     )
 
     cleaned = raw[
-        finite_row_mask
+        finite_mask
     ]
 
-    removed_row_count = int(
-        raw.shape[0]
-        - cleaned.shape[0]
+    removed_rows = int(
+        raw.shape[
+            0
+        ]
+        - cleaned.shape[
+            0
+        ]
     )
 
-    if cleaned.shape[0] == 0:
+    if cleaned.shape[
+        0
+    ] == 0:
         raise ValueError(
-            "No finite spectrum rows"
+            "Spectrum contains no finite rows: "
+            f"{path.name}"
         )
 
     energy = np.asarray(
@@ -652,39 +821,78 @@ def load_spectrum(
         values,
     )
 
-    if energy.ndim != 1:
+    if (
+        energy.ndim != 1
+        or values.ndim != 1
+        or len(
+            energy
+        ) != len(
+            values
+        )
+    ):
         raise ValueError(
-            "Energy axis is not one-dimensional"
+            "Invalid energy/value arrays"
         )
 
-    if values.ndim != 1:
-        raise ValueError(
-            "Spectrum values are not one-dimensional"
+    if np.any(
+        np.diff(
+            energy
         )
-
-    if len(energy) != len(values):
+        <= 0.0
+    ):
         raise ValueError(
-            "Energy and value arrays have different lengths"
+            "Energy grid is not strictly increasing: "
+            f"{path.name}"
         )
 
     return (
         energy,
         values,
-        removed_row_count,
+        removed_rows,
     )
 
 
 # ============================================================
-# Exclusion utilities
+# Spectrum validation
 # ============================================================
+
+def same_energy_grid(
+    energy_a,
+    energy_b,
+    rtol,
+    atol,
+):
+    """Return whether two energy grids match."""
+
+    energy_a = np.asarray(
+        energy_a,
+        dtype=np.float64,
+    )
+
+    energy_b = np.asarray(
+        energy_b,
+        dtype=np.float64,
+    )
+
+    if energy_a.shape != energy_b.shape:
+        return False
+
+    return bool(
+        np.allclose(
+            energy_a,
+            energy_b,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=False,
+        )
+    )
+
 
 def add_reason(
     reasons,
     reason,
 ):
-    """
-    Add a unique exclusion reason.
-    """
+    """Append one unique exclusion reason."""
 
     reason = str(
         reason
@@ -699,26 +907,20 @@ def add_reason(
 def exception_reason(
     exception,
 ):
-    """
-    Convert an exception to a compact CSV-safe reason.
-
-    Local absolute paths are not included.
-    """
-
-    message = str(
-        exception
-    )
+    """Convert an exception to a compact audit-safe reason."""
 
     message = " ".join(
-        message.split()
-    )
-
-    message = message.replace(
+        str(
+            exception
+        ).split()
+    ).replace(
         ";",
         ",",
     )
 
-    if len(message) > 200:
+    if len(
+        message
+    ) > 200:
         message = (
             message[
                 :200
@@ -733,16 +935,10 @@ def exception_reason(
     )
 
 
-# ============================================================
-# Summary helpers
-# ============================================================
-
 def numeric_summary(
     values,
 ):
-    """
-    Return a JSON-serializable numeric summary.
-    """
+    """Return JSON-safe numerical summary statistics."""
 
     array = np.asarray(
         values,
@@ -788,7 +984,7 @@ def numeric_summary(
 
 
 # ============================================================
-# Main dataset preparation
+# Main
 # ============================================================
 
 def main():
@@ -804,7 +1000,7 @@ def main():
         config_path
     )
 
-    normalized_config = validate_config(
+    normalized = validate_config(
         config
     )
 
@@ -825,21 +1021,17 @@ def main():
         "paths"
     ]
 
-    spectrum_config = config[
-        "spectrum"
-    ]
-
     columns = config[
         "columns"
     ]
 
-    exclusion_config = config[
-        "exclusion"
-    ]
-
-    system_name = normalized_config[
+    system_name = normalized[
         "system_name"
     ]
+
+    # --------------------------------------------------------
+    # Resolve paths
+    # --------------------------------------------------------
 
     spec_directory = resolve_path(
         paths[
@@ -877,7 +1069,7 @@ def main():
         )
 
     # --------------------------------------------------------
-    # Output files
+    # Output paths
     # --------------------------------------------------------
 
     dataset_file = (
@@ -905,31 +1097,27 @@ def main():
         / f"{system_name}_summary.json"
     )
 
-    output_files = [
-        dataset_file,
-        metadata_file,
-        accepted_file,
-        excluded_file,
-        summary_file,
-    ]
-
     check_output_files(
-        output_files,
-        overwrite=(
-            arguments.overwrite
-        ),
+        [
+            dataset_file,
+            metadata_file,
+            accepted_file,
+            excluded_file,
+            summary_file,
+        ],
+        overwrite=arguments.overwrite,
         label="Dataset output files",
     )
 
     # --------------------------------------------------------
-    # Read Quanty labels and parameters
+    # Load source metadata
     # --------------------------------------------------------
 
-    source_dataframe = pd.read_csv(
+    source = pd.read_csv(
         results_csv
     )
 
-    if source_dataframe.empty:
+    if source.empty:
         raise ValueError(
             "Quanty results CSV is empty"
         )
@@ -952,103 +1140,117 @@ def main():
         ]
     )
 
+    b_ext_column = str(
+        columns[
+            "b_ext_t"
+        ]
+    )
+
     required_csv_columns = [
         prefix_column,
         sz_column,
         lz_column,
+        b_ext_column,
     ]
 
     missing_csv_columns = [
         column
         for column in required_csv_columns
-        if column not in source_dataframe.columns
+        if column not in source.columns
     ]
 
     if missing_csv_columns:
         raise ValueError(
-            "Required columns are missing from "
-            "the Quanty results CSV: "
+            "Required CSV columns are missing: "
             f"{missing_csv_columns}"
         )
 
     # --------------------------------------------------------
-    # Normalized configuration values
+    # Effective settings
     # --------------------------------------------------------
 
-    zero_tolerance = normalized_config[
-        "zero_tolerance"
+    right_suffix = normalized[
+        "xas_right_suffix"
     ]
 
-    exclude_both_zero = bool(
-        exclusion_config.get(
-            "exclude_both_moments_zero",
-            True,
-        )
-    )
-
-    xas_suffix = normalized_config[
-        "xas_suffix"
+    left_suffix = normalized[
+        "xas_left_suffix"
     ]
 
-    xmcd_suffix = normalized_config[
+    xmcd_suffix = normalized[
         "xmcd_suffix"
     ]
 
-    skip_header = normalized_config[
+    skip_header = normalized[
         "skip_header"
     ]
 
-    energy_column = normalized_config[
+    energy_column = normalized[
         "energy_column"
     ]
 
-    value_column = normalized_config[
+    value_column = normalized[
         "value_column"
     ]
 
-    require_equal_length = bool(
-        spectrum_config.get(
-            "require_equal_length",
-            True,
-        )
-    )
+    energy_rtol = normalized[
+        "energy_rtol"
+    ]
 
-    require_same_energy_grid = bool(
-        spectrum_config.get(
-            "require_same_energy_grid",
-            True,
-        )
-    )
+    energy_atol = normalized[
+        "energy_atol"
+    ]
 
-    energy_relative_tolerance = (
-        normalized_config[
-            "energy_rtol"
-        ]
-    )
+    require_equal_length = normalized[
+        "require_equal_length"
+    ]
 
-    energy_absolute_tolerance = (
-        normalized_config[
-            "energy_atol"
-        ]
-    )
+    require_same_grid = normalized[
+        "require_same_energy_grid"
+    ]
+
+    exclude_both_zero = normalized[
+        "exclude_both_moments_zero"
+    ]
+
+    zero_tolerance = normalized[
+        "zero_tolerance"
+    ]
+
+    field_enabled = normalized[
+        "external_field_enabled"
+    ]
+
+    expected_field = normalized[
+        "external_field_magnitude_t"
+    ]
+
+    field_tolerance = normalized[
+        "external_field_tolerance_t"
+    ]
+
+    field_direction = normalized[
+        "external_field_direction"
+    ]
 
     # --------------------------------------------------------
-    # Output containers
+    # Accumulators
     # --------------------------------------------------------
 
-    metadata_records = []
+    records = []
 
     accepted_x = []
     accepted_y = []
-    accepted_sample_ids = []
+    accepted_ids = []
     accepted_prefixes = []
+    accepted_fields = []
+
+    observed_prefixes = set()
 
     expected_feature_count = None
 
     reference_energy_xas = None
     reference_energy_xmcd = None
-
-    observed_prefixes = set()
 
     # --------------------------------------------------------
     # Process every source row
@@ -1056,54 +1258,76 @@ def main():
 
     for row_position, (
         source_index,
-        source_row,
+        row,
     ) in enumerate(
-        source_dataframe.iterrows()
+        source.iterrows()
     ):
         sample_id = (
             f"{system_name}_"
             f"{row_position:06d}"
         )
 
-        raw_prefix = source_row[
+        raw_prefix = row[
             prefix_column
         ]
 
-        if pd.isna(
-            raw_prefix
-        ):
-            prefix = ""
-
-        else:
-            prefix = str(
+        prefix = (
+            ""
+            if pd.isna(
+                raw_prefix
+            )
+            else str(
                 raw_prefix
             ).strip()
+        )
 
         sz_value = pd.to_numeric(
             pd.Series(
                 [
-                    source_row[
+                    row[
                         sz_column
                     ]
                 ]
             ),
             errors="coerce",
-        ).iloc[0]
+        ).iloc[
+            0
+        ]
 
         lz_value = pd.to_numeric(
             pd.Series(
                 [
-                    source_row[
+                    row[
                         lz_column
                     ]
                 ]
             ),
             errors="coerce",
-        ).iloc[0]
+        ).iloc[
+            0
+        ]
 
-        xas_file = (
+        b_ext_value = pd.to_numeric(
+            pd.Series(
+                [
+                    row[
+                        b_ext_column
+                    ]
+                ]
+            ),
+            errors="coerce",
+        ).iloc[
+            0
+        ]
+
+        right_file = (
             spec_directory
-            / f"{prefix}{xas_suffix}"
+            / f"{prefix}{right_suffix}"
+        )
+
+        left_file = (
+            spec_directory
+            / f"{prefix}{left_suffix}"
         )
 
         xmcd_file = (
@@ -1111,99 +1335,82 @@ def main():
             / f"{prefix}{xmcd_suffix}"
         )
 
-        audit_record = (
-            source_row.to_dict()
-        )
+        audit = row.to_dict()
 
-        audit_record.update(
+        audit.update(
             {
-                "sample_id": (
-                    sample_id
+                "sample_id": sample_id,
+                "source_index": str(
+                    source_index
                 ),
-
-                "source_index": (
-                    str(
-                        source_index
-                    )
-                ),
-
                 "source_row_position": int(
                     row_position
                 ),
-
-                "system": (
-                    system_name
-                ),
-
-                "element": (
-                    normalized_config[
-                        "element_name"
-                    ]
-                ),
-
+                "system": system_name,
+                "element": normalized[
+                    "element_name"
+                ],
                 "n_electrons_3d": int(
-                    normalized_config[
+                    normalized[
                         "n_electrons_3d"
                     ]
                 ),
-
-                "prefix": (
-                    prefix
+                "prefix": prefix,
+                "sz_label": sz_value,
+                "lz_label": lz_value,
+                "b_ext_t": b_ext_value,
+                "expected_b_ext_t": expected_field,
+                "external_field_direction_x": field_direction[
+                    0
+                ],
+                "external_field_direction_y": field_direction[
+                    1
+                ],
+                "external_field_direction_z": field_direction[
+                    2
+                ],
+                "xas_right_file": safe_public_path(
+                    right_file,
+                    repository_root,
                 ),
-
-                "sz_label": (
-                    sz_value
+                "xas_left_file": safe_public_path(
+                    left_file,
+                    repository_root,
                 ),
-
-                "lz_label": (
-                    lz_value
+                "xmcd_file": safe_public_path(
+                    xmcd_file,
+                    repository_root,
                 ),
-
-                "xas_file": (
-                    safe_public_path(
-                        xas_file,
-                        repository_root,
-                    )
-                ),
-
-                "xmcd_file": (
-                    safe_public_path(
-                        xmcd_file,
-                        repository_root,
-                    )
-                ),
-
+                "xas_definition": "(I_r + I_l) / 2",
+                "xmcd_definition": "I_r - I_l",
                 "accepted": False,
-
                 "exclusion_reason": "",
-
+                "xas_right_rows": 0,
+                "xas_left_rows": 0,
                 "xas_rows": 0,
-
                 "xmcd_rows": 0,
-
-                "xas_removed_nonfinite_rows": 0,
-
+                "xas_right_removed_nonfinite_rows": 0,
+                "xas_left_removed_nonfinite_rows": 0,
                 "xmcd_removed_nonfinite_rows": 0,
-
                 "feature_count": 0,
             }
         )
 
-        exclusion_reasons = []
+        reasons = []
 
         # ----------------------------------------------------
-        # Prefix validity
+        # Prefix checks
         # ----------------------------------------------------
 
         if not prefix:
             add_reason(
-                exclusion_reasons,
+                reasons,
                 "empty_prefix",
             )
 
         elif prefix in observed_prefixes:
             add_reason(
-                exclusion_reasons,
+                reasons,
                 "duplicate_prefix",
             )
 
@@ -1213,7 +1420,7 @@ def main():
             )
 
         # ----------------------------------------------------
-        # Label validity and zero-label criterion
+        # Label checks
         # ----------------------------------------------------
 
         if (
@@ -1225,7 +1432,7 @@ def main():
             )
         ):
             add_reason(
-                exclusion_reasons,
+                reasons,
                 "nonfinite_label",
             )
 
@@ -1243,21 +1450,69 @@ def main():
             ) < zero_tolerance
         ):
             add_reason(
-                exclusion_reasons,
+                reasons,
                 "both_moments_below_tolerance",
             )
 
         # ----------------------------------------------------
-        # File existence
+        # External field checks
+        # ----------------------------------------------------
+
+        if not np.isfinite(
+            b_ext_value
+        ):
+            add_reason(
+                reasons,
+                "nonfinite_external_magnetic_field",
+            )
+
+        elif field_enabled:
+            if not np.isclose(
+                float(
+                    b_ext_value
+                ),
+                expected_field,
+                rtol=0.0,
+                atol=field_tolerance,
+            ):
+                add_reason(
+                    reasons,
+                    "external_magnetic_field_mismatch",
+                )
+
+        elif not np.isclose(
+            float(
+                b_ext_value
+            ),
+            0.0,
+            rtol=0.0,
+            atol=field_tolerance,
+        ):
+            add_reason(
+                reasons,
+                "unexpected_nonzero_external_magnetic_field",
+            )
+
+        # ----------------------------------------------------
+        # File checks
         # ----------------------------------------------------
 
         if (
             prefix
-            and not xas_file.is_file()
+            and not right_file.is_file()
         ):
             add_reason(
-                exclusion_reasons,
-                "missing_xas_file",
+                reasons,
+                "missing_xas_right_file",
+            )
+
+        if (
+            prefix
+            and not left_file.is_file()
+        ):
+            add_reason(
+                reasons,
+                "missing_xas_left_file",
             )
 
         if (
@@ -1265,22 +1520,35 @@ def main():
             and not xmcd_file.is_file()
         ):
             add_reason(
-                exclusion_reasons,
+                reasons,
                 "missing_xmcd_file",
             )
 
+        features = None
+
         # ----------------------------------------------------
-        # Load spectra if not already excluded
+        # Load spectra
         # ----------------------------------------------------
 
-        if not exclusion_reasons:
+        if not reasons:
             try:
                 (
-                    energy_xas,
-                    xas_values,
-                    removed_xas_rows,
+                    energy_right,
+                    right_values,
+                    removed_right,
                 ) = load_spectrum(
-                    xas_file,
+                    right_file,
+                    skip_header,
+                    energy_column,
+                    value_column,
+                )
+
+                (
+                    energy_left,
+                    left_values,
+                    removed_left,
+                ) = load_spectrum(
+                    left_file,
                     skip_header,
                     energy_column,
                     value_column,
@@ -1289,7 +1557,7 @@ def main():
                 (
                     energy_xmcd,
                     xmcd_values,
-                    removed_xmcd_rows,
+                    removed_xmcd,
                 ) = load_spectrum(
                     xmcd_file,
                     skip_header,
@@ -1297,15 +1565,23 @@ def main():
                     value_column,
                 )
 
-                audit_record[
-                    "xas_rows"
+                audit[
+                    "xas_right_rows"
                 ] = int(
                     len(
-                        xas_values
+                        right_values
                     )
                 )
 
-                audit_record[
+                audit[
+                    "xas_left_rows"
+                ] = int(
+                    len(
+                        left_values
+                    )
+                )
+
+                audit[
                     "xmcd_rows"
                 ] = int(
                     len(
@@ -1313,39 +1589,60 @@ def main():
                     )
                 )
 
-                audit_record[
-                    "xas_removed_nonfinite_rows"
+                audit[
+                    "xas_right_removed_nonfinite_rows"
                 ] = int(
-                    removed_xas_rows
+                    removed_right
                 )
 
-                audit_record[
+                audit[
+                    "xas_left_removed_nonfinite_rows"
+                ] = int(
+                    removed_left
+                )
+
+                audit[
                     "xmcd_removed_nonfinite_rows"
                 ] = int(
-                    removed_xmcd_rows
+                    removed_xmcd
                 )
 
                 # --------------------------------------------
-                # XAS/XMCD length consistency
+                # Length checks
                 # --------------------------------------------
 
-                if (
-                    require_equal_length
-                    and len(
-                        xas_values
+                if require_equal_length:
+                    if len(
+                        right_values
+                    ) != len(
+                        left_values
+                    ):
+                        add_reason(
+                            reasons,
+                            "right_left_length_mismatch",
+                        )
+
+                    if len(
+                        right_values
                     ) != len(
                         xmcd_values
-                    )
-                ):
-                    add_reason(
-                        exclusion_reasons,
-                        "xas_xmcd_length_mismatch",
-                    )
+                    ):
+                        add_reason(
+                            reasons,
+                            "xas_xmcd_length_mismatch",
+                        )
 
-                else:
+                # --------------------------------------------
+                # Use common length if permitted
+                # --------------------------------------------
+
+                if not reasons:
                     common_length = min(
                         len(
-                            xas_values
+                            right_values
+                        ),
+                        len(
+                            left_values
                         ),
                         len(
                             xmcd_values
@@ -1354,68 +1651,92 @@ def main():
 
                     if common_length <= 0:
                         add_reason(
-                            exclusion_reasons,
+                            reasons,
                             "empty_common_spectrum",
                         )
 
                     else:
-                        xas_values = (
-                            xas_values[
-                                :common_length
-                            ]
-                        )
+                        energy_right = energy_right[
+                            :common_length
+                        ]
 
-                        xmcd_values = (
-                            xmcd_values[
-                                :common_length
-                            ]
-                        )
+                        right_values = right_values[
+                            :common_length
+                        ]
 
-                        energy_xas = (
-                            energy_xas[
-                                :common_length
-                            ]
-                        )
+                        energy_left = energy_left[
+                            :common_length
+                        ]
 
-                        energy_xmcd = (
-                            energy_xmcd[
-                                :common_length
-                            ]
-                        )
+                        left_values = left_values[
+                            :common_length
+                        ]
+
+                        energy_xmcd = energy_xmcd[
+                            :common_length
+                        ]
+
+                        xmcd_values = xmcd_values[
+                            :common_length
+                        ]
 
                 # --------------------------------------------
-                # XAS/XMCD energy-grid consistency
+                # Energy-grid checks
                 # --------------------------------------------
 
                 if (
-                    not exclusion_reasons
-                    and require_same_energy_grid
+                    not reasons
+                    and require_same_grid
                 ):
-                    same_grid = np.allclose(
-                        energy_xas,
-                        energy_xmcd,
-                        rtol=(
-                            energy_relative_tolerance
-                        ),
-                        atol=(
-                            energy_absolute_tolerance
-                        ),
-                        equal_nan=False,
-                    )
-
-                    if not same_grid:
+                    if not same_energy_grid(
+                        energy_right,
+                        energy_left,
+                        energy_rtol,
+                        energy_atol,
+                    ):
                         add_reason(
-                            exclusion_reasons,
+                            reasons,
+                            "right_left_energy_grid_mismatch",
+                        )
+
+                    if not same_energy_grid(
+                        energy_right,
+                        energy_xmcd,
+                        energy_rtol,
+                        energy_atol,
+                    ):
+                        add_reason(
+                            reasons,
                             "xas_xmcd_energy_grid_mismatch",
                         )
 
                 # --------------------------------------------
-                # Concatenated NN input
+                # Construct XAS and feature vector
                 # --------------------------------------------
 
-                features = None
+                if not reasons:
+                    xas_values = (
+                        right_values
+                        + left_values
+                    ) / 2.0
 
-                if not exclusion_reasons:
+                    energy_xas = (
+                        energy_right
+                    )
+
+                    ensure_finite(
+                        "Constructed XAS",
+                        xas_values,
+                    )
+
+                    audit[
+                        "xas_rows"
+                    ] = int(
+                        len(
+                            xas_values
+                        )
+                    )
+
                     features = np.concatenate(
                         [
                             xas_values,
@@ -1426,7 +1747,7 @@ def main():
                         copy=False,
                     )
 
-                    audit_record[
+                    audit[
                         "feature_count"
                     ] = int(
                         len(
@@ -1438,17 +1759,17 @@ def main():
                         features
                     ).all():
                         add_reason(
-                            exclusion_reasons,
+                            reasons,
                             "nonfinite_feature_after_loading",
                         )
 
                 # --------------------------------------------
-                # Dataset-wide shape/grid consistency
+                # Reference feature/grid checks
                 # --------------------------------------------
 
                 if (
                     features is not None
-                    and not exclusion_reasons
+                    and not reasons
                 ):
                     if expected_feature_count is None:
                         expected_feature_count = int(
@@ -1465,61 +1786,44 @@ def main():
                             energy_xmcd.copy()
                         )
 
-                    elif (
-                        len(
-                            features
-                        )
-                        != expected_feature_count
-                    ):
+                    elif len(
+                        features
+                    ) != expected_feature_count:
                         add_reason(
-                            exclusion_reasons,
+                            reasons,
                             "feature_count_mismatch",
                         )
 
-                    elif require_same_energy_grid:
-                        xas_grid_matches = np.allclose(
+                    elif require_same_grid:
+                        if not same_energy_grid(
                             energy_xas,
                             reference_energy_xas,
-                            rtol=(
-                                energy_relative_tolerance
-                            ),
-                            atol=(
-                                energy_absolute_tolerance
-                            ),
-                            equal_nan=False,
-                        )
-
-                        xmcd_grid_matches = np.allclose(
-                            energy_xmcd,
-                            reference_energy_xmcd,
-                            rtol=(
-                                energy_relative_tolerance
-                            ),
-                            atol=(
-                                energy_absolute_tolerance
-                            ),
-                            equal_nan=False,
-                        )
-
-                        if not xas_grid_matches:
+                            energy_rtol,
+                            energy_atol,
+                        ):
                             add_reason(
-                                exclusion_reasons,
+                                reasons,
                                 "xas_energy_grid_differs_from_reference",
                             )
 
-                        if not xmcd_grid_matches:
+                        if not same_energy_grid(
+                            energy_xmcd,
+                            reference_energy_xmcd,
+                            energy_rtol,
+                            energy_atol,
+                        ):
                             add_reason(
-                                exclusion_reasons,
+                                reasons,
                                 "xmcd_energy_grid_differs_from_reference",
                             )
 
                 # --------------------------------------------
-                # Accept sample
+                # Accept the sample
                 # --------------------------------------------
 
                 if (
                     features is not None
-                    and not exclusion_reasons
+                    and not reasons
                 ):
                     accepted_x.append(
                         features
@@ -1536,7 +1840,7 @@ def main():
                         ]
                     )
 
-                    accepted_sample_ids.append(
+                    accepted_ids.append(
                         sample_id
                     )
 
@@ -1544,54 +1848,60 @@ def main():
                         prefix
                     )
 
+                    accepted_fields.append(
+                        float(
+                            b_ext_value
+                        )
+                    )
+
             except Exception as exception:
                 add_reason(
-                    exclusion_reasons,
+                    reasons,
                     exception_reason(
                         exception
                     ),
                 )
 
-        audit_record[
+        audit[
             "accepted"
         ] = (
             len(
-                exclusion_reasons
+                reasons
             )
             == 0
         )
 
-        audit_record[
+        audit[
             "exclusion_reason"
         ] = ";".join(
-            exclusion_reasons
+            reasons
         )
 
-        metadata_records.append(
-            audit_record
+        records.append(
+            audit
         )
 
     # --------------------------------------------------------
-    # Construct audit tables
+    # Build metadata tables
     # --------------------------------------------------------
 
-    metadata_dataframe = pd.DataFrame(
-        metadata_records
+    metadata = pd.DataFrame(
+        records
     )
 
-    if metadata_dataframe.empty:
+    if metadata.empty:
         raise RuntimeError(
             "No source rows were processed"
         )
 
-    accepted_mask = (
-        metadata_dataframe[
-            "accepted"
-        ].astype(bool)
+    accepted_mask = metadata[
+        "accepted"
+    ].astype(
+        bool
     )
 
     accepted_metadata = (
-        metadata_dataframe.loc[
+        metadata.loc[
             accepted_mask
         ]
         .copy()
@@ -1601,7 +1911,7 @@ def main():
     )
 
     excluded_metadata = (
-        metadata_dataframe.loc[
+        metadata.loc[
             ~accepted_mask
         ]
         .copy()
@@ -1612,12 +1922,11 @@ def main():
 
     if not accepted_x:
         raise RuntimeError(
-            "No samples were accepted. "
-            "Dataset was not created."
+            "No samples were accepted"
         )
 
     # --------------------------------------------------------
-    # Final numeric arrays
+    # Build final arrays
     # --------------------------------------------------------
 
     X = np.asarray(
@@ -1631,7 +1940,7 @@ def main():
     )
 
     sample_ids = np.asarray(
-        accepted_sample_ids,
+        accepted_ids,
         dtype=str,
     )
 
@@ -1640,46 +1949,64 @@ def main():
         dtype=str,
     )
 
-    if X.ndim != 2:
-        raise RuntimeError(
-            f"Unexpected X shape: {X.shape}"
-        )
+    b_ext_values = np.asarray(
+        accepted_fields,
+        dtype=np.float64,
+    )
 
     if (
-        Y.ndim != 2
-        or Y.shape[1] != 2
+        X.ndim != 2
+        or Y.ndim != 2
+        or Y.shape[
+            1
+        ] != 2
     ):
         raise RuntimeError(
-            f"Unexpected Y shape: {Y.shape}"
+            "Unexpected final array shapes: "
+            f"X={X.shape}, Y={Y.shape}"
         )
 
     if not (
-        len(X)
-        == len(Y)
-        == len(sample_ids)
-        == len(prefixes)
+        len(
+            X
+        )
+        == len(
+            Y
+        )
+        == len(
+            sample_ids
+        )
+        == len(
+            prefixes
+        )
+        == len(
+            b_ext_values
+        )
     ):
         raise RuntimeError(
-            "Accepted arrays have inconsistent "
-            "sample counts"
+            "Accepted arrays have inconsistent sample counts"
         )
 
     if len(
         set(
             sample_ids.tolist()
         )
-    ) != len(sample_ids):
+    ) != len(
+        sample_ids
+    ):
         raise RuntimeError(
-            "Duplicate sample_id values were detected"
+            "Duplicate sample IDs were detected"
         )
 
     if len(
         set(
             prefixes.tolist()
         )
-    ) != len(prefixes):
+    ) != len(
+        prefixes
+    ):
         raise RuntimeError(
-            "Duplicate accepted Prefix values were detected"
+            "Duplicate accepted prefixes were detected"
         )
 
     ensure_finite(
@@ -1692,57 +2019,78 @@ def main():
         Y,
     )
 
-    if reference_energy_xas is None:
-        raise RuntimeError(
-            "Reference XAS energy grid was not created"
-        )
+    ensure_finite(
+        "Accepted external fields",
+        b_ext_values,
+    )
 
-    if reference_energy_xmcd is None:
+    if (
+        reference_energy_xas is None
+        or reference_energy_xmcd is None
+    ):
         raise RuntimeError(
-            "Reference XMCD energy grid was not created"
+            "Reference energy grids were not created"
         )
 
     ensure_finite(
-        "Reference XAS energy grid",
+        "Reference XAS energy",
         reference_energy_xas,
     )
 
     ensure_finite(
-        "Reference XMCD energy grid",
+        "Reference XMCD energy",
         reference_energy_xmcd,
     )
 
+    if (
+        field_enabled
+        and not np.allclose(
+            b_ext_values,
+            expected_field,
+            rtol=0.0,
+            atol=field_tolerance,
+        )
+    ):
+        raise RuntimeError(
+            "Accepted samples contain inconsistent "
+            "external-field values"
+        )
+
     # --------------------------------------------------------
-    # Save compressed NN dataset
+    # Save NPZ
     # --------------------------------------------------------
 
     np.savez_compressed(
         dataset_file,
-
-        X=(
-            X
+        X=X,
+        Y=Y,
+        sample_id=sample_ids,
+        prefix=prefixes,
+        energy_xas=reference_energy_xas,
+        energy_xmcd=reference_energy_xmcd,
+        b_ext_t=b_ext_values,
+        external_field_enabled=np.asarray(
+            [
+                field_enabled
+            ],
+            dtype=bool,
         ),
-
-        Y=(
-            Y
+        external_field_magnitude_t=np.asarray(
+            [
+                expected_field
+            ],
+            dtype=np.float64,
         ),
-
-        sample_id=(
-            sample_ids
+        external_field_direction=np.asarray(
+            field_direction,
+            dtype=np.float64,
         ),
-
-        prefix=(
-            prefixes
+        external_field_is_model_input=np.asarray(
+            [
+                False
+            ],
+            dtype=bool,
         ),
-
-        energy_xas=(
-            reference_energy_xas
-        ),
-
-        energy_xmcd=(
-            reference_energy_xmcd
-        ),
-
         target_names=np.asarray(
             [
                 "Sz",
@@ -1750,7 +2098,6 @@ def main():
             ],
             dtype=str,
         ),
-
         n_xas=np.asarray(
             [
                 len(
@@ -1759,7 +2106,6 @@ def main():
             ],
             dtype=np.int64,
         ),
-
         n_xmcd=np.asarray(
             [
                 len(
@@ -1768,13 +2114,25 @@ def main():
             ],
             dtype=np.int64,
         ),
+        xas_definition=np.asarray(
+            [
+                "(I_r + I_l) / 2"
+            ],
+            dtype=str,
+        ),
+        xmcd_definition=np.asarray(
+            [
+                "I_r - I_l"
+            ],
+            dtype=str,
+        ),
     )
 
     # --------------------------------------------------------
-    # Save audit CSV files
+    # Save metadata CSV files
     # --------------------------------------------------------
 
-    metadata_dataframe.to_csv(
+    metadata.to_csv(
         metadata_file,
         index=False,
         quoting=csv.QUOTE_MINIMAL,
@@ -1793,180 +2151,155 @@ def main():
     )
 
     # --------------------------------------------------------
-    # Count every exclusion reason
+    # Count exclusion reasons
     # --------------------------------------------------------
 
-    exclusion_reason_counter = Counter()
+    reason_counter = Counter()
 
     for reason_text in excluded_metadata[
         "exclusion_reason"
     ].fillna(
         ""
     ):
-        reasons = [
-            reason
-            for reason in str(
-                reason_text
-            ).split(
-                ";"
-            )
-            if reason
-        ]
-
-        exclusion_reason_counter.update(
-            reasons
+        reason_counter.update(
+            [
+                reason
+                for reason in str(
+                    reason_text
+                ).split(
+                    ";"
+                )
+                if reason
+            ]
         )
-
-    exclusion_reason_counts = dict(
-        sorted(
-            exclusion_reason_counter.items()
-        )
-    )
 
     # --------------------------------------------------------
-    # Summary JSON
+    # Build summary
     # --------------------------------------------------------
 
     summary = {
-        "created_at_utc": (
-            utc_now_iso()
+        "created_at_utc": utc_now_iso(),
+
+        "system": system,
+
+        "config_file": safe_public_path(
+            config_path,
+            repository_root,
         ),
 
-        "system": (
-            system
+        "config_sha256": sha256_file(
+            config_path
         ),
 
-        "config_file": (
-            safe_public_path(
-                config_path,
-                repository_root,
-            )
+        "source_results_csv": safe_public_path(
+            results_csv,
+            repository_root,
         ),
 
-        "config_sha256": (
-            sha256_file(
-                config_path
-            )
+        "source_results_csv_sha256": sha256_file(
+            results_csv
         ),
 
-        "source_results_csv": (
-            safe_public_path(
-                results_csv,
-                repository_root,
-            )
+        "spec_directory": safe_public_path(
+            spec_directory,
+            repository_root,
         ),
 
-        "source_results_csv_sha256": (
-            sha256_file(
-                results_csv
-            )
-        ),
+        "external_magnetic_field": {
+            "enabled": field_enabled,
 
-        "spec_directory": (
-            safe_public_path(
-                spec_directory,
-                repository_root,
-            )
-        ),
+            "magnitude_t": expected_field,
+
+            "direction": field_direction,
+
+            "field_column": b_ext_column,
+
+            "field_tolerance_t": field_tolerance,
+
+            "accepted_field_summary_t": numeric_summary(
+                b_ext_values
+            ),
+
+            "is_model_input": False,
+
+            "hamiltonian_term": (
+                "mu_B * B_ext * "
+                "(g_L * Lz + g_S * Sz)"
+            ),
+        },
 
         "spectrum_settings": {
-            "xas_suffix": (
-                xas_suffix
-            ),
+            "xas_right_suffix": right_suffix,
 
-            "xmcd_suffix": (
-                xmcd_suffix
-            ),
+            "xas_left_suffix": left_suffix,
 
-            "skip_header": (
-                skip_header
-            ),
+            "xmcd_suffix": xmcd_suffix,
 
-            "energy_column": (
-                energy_column
-            ),
+            "xas_definition": "(I_r + I_l) / 2",
 
-            "value_column": (
-                value_column
-            ),
+            "xmcd_definition": "I_r - I_l",
+
+            "skip_header": skip_header,
+
+            "energy_column": energy_column,
+
+            "value_column": value_column,
 
             "require_equal_length": (
                 require_equal_length
             ),
 
             "require_same_energy_grid": (
-                require_same_energy_grid
+                require_same_grid
             ),
 
-            "energy_rtol": (
-                energy_relative_tolerance
-            ),
+            "energy_rtol": energy_rtol,
 
-            "energy_atol": (
-                energy_absolute_tolerance
-            ),
+            "energy_atol": energy_atol,
         },
 
         "output_files": {
-            "dataset_npz": (
-                safe_public_path(
-                    dataset_file,
-                    repository_root,
-                )
+            "dataset_npz": safe_public_path(
+                dataset_file,
+                repository_root,
             ),
 
-            "metadata_csv": (
-                safe_public_path(
-                    metadata_file,
-                    repository_root,
-                )
+            "metadata_csv": safe_public_path(
+                metadata_file,
+                repository_root,
             ),
 
-            "accepted_csv": (
-                safe_public_path(
-                    accepted_file,
-                    repository_root,
-                )
+            "accepted_csv": safe_public_path(
+                accepted_file,
+                repository_root,
             ),
 
-            "excluded_csv": (
-                safe_public_path(
-                    excluded_file,
-                    repository_root,
-                )
+            "excluded_csv": safe_public_path(
+                excluded_file,
+                repository_root,
             ),
 
-            "summary_json": (
-                safe_public_path(
-                    summary_file,
-                    repository_root,
-                )
+            "summary_json": safe_public_path(
+                summary_file,
+                repository_root,
             ),
         },
 
         "output_sha256": {
-            "dataset_npz": (
-                sha256_file(
-                    dataset_file
-                )
+            "dataset_npz": sha256_file(
+                dataset_file
             ),
 
-            "metadata_csv": (
-                sha256_file(
-                    metadata_file
-                )
+            "metadata_csv": sha256_file(
+                metadata_file
             ),
 
-            "accepted_csv": (
-                sha256_file(
-                    accepted_file
-                )
+            "accepted_csv": sha256_file(
+                accepted_file
             ),
 
-            "excluded_csv": (
-                sha256_file(
-                    excluded_file
-                )
+            "excluded_csv": sha256_file(
+                excluded_file
             ),
         },
 
@@ -1975,9 +2308,7 @@ def main():
                 exclude_both_zero
             ),
 
-            "zero_tolerance": (
-                zero_tolerance
-            ),
+            "zero_tolerance": zero_tolerance,
 
             "criterion": (
                 "abs(Sz) < tolerance and "
@@ -1988,7 +2319,7 @@ def main():
         "counts": {
             "source_rows": int(
                 len(
-                    source_dataframe
+                    source
                 )
             ),
 
@@ -2005,8 +2336,10 @@ def main():
             ),
         },
 
-        "exclusion_reason_counts": (
-            exclusion_reason_counts
+        "exclusion_reason_counts": dict(
+            sorted(
+                reason_counter.items()
+            )
         ),
 
         "arrays": {
@@ -2049,30 +2382,24 @@ def main():
         },
 
         "accepted_label_summary": {
-            "Sz": (
-                numeric_summary(
-                    Y[
-                        :,
-                        0,
-                    ]
-                )
+            "Sz": numeric_summary(
+                Y[
+                    :,
+                    0,
+                ]
             ),
 
-            "Lz": (
-                numeric_summary(
-                    Y[
-                        :,
-                        1,
-                    ]
-                )
+            "Lz": numeric_summary(
+                Y[
+                    :,
+                    1,
+                ]
             ),
         },
 
         "software": software_versions(
             {
-                "pandas": (
-                    pd.__version__
-                )
+                "pandas": pd.__version__,
             }
         ),
     }
@@ -2083,10 +2410,12 @@ def main():
     )
 
     # --------------------------------------------------------
-    # Console summary
+    # Console report
     # --------------------------------------------------------
 
-    print("=" * 80)
+    print(
+        "=" * 80
+    )
 
     print(
         f"System             : {system_name}"
@@ -2103,18 +2432,35 @@ def main():
     )
 
     print(
-        "Original samples   : "
-        f"{len(source_dataframe)}"
+        "XAS definition     : (I_r + I_l) / 2"
     )
 
     print(
-        "Accepted samples   : "
-        f"{len(accepted_metadata)}"
+        "XMCD definition    : I_r - I_l"
     )
 
     print(
-        "Excluded samples   : "
-        f"{len(excluded_metadata)}"
+        f"External field     : {expected_field:.6f} T"
+    )
+
+    print(
+        f"Field direction    : {field_direction}"
+    )
+
+    print(
+        "Field is NN input  : False"
+    )
+
+    print(
+        f"Original samples   : {len(source)}"
+    )
+
+    print(
+        f"Accepted samples   : {len(accepted_metadata)}"
+    )
+
+    print(
+        f"Excluded samples   : {len(excluded_metadata)}"
     )
 
     print(
@@ -2126,31 +2472,33 @@ def main():
     )
 
     print(
-        "Dataset             : "
+        "Dataset            : "
         f"{safe_public_path(dataset_file, repository_root)}"
     )
 
     print(
-        "Metadata            : "
+        "Metadata           : "
         f"{safe_public_path(metadata_file, repository_root)}"
     )
 
     print(
-        "Accepted records    : "
+        "Accepted records   : "
         f"{safe_public_path(accepted_file, repository_root)}"
     )
 
     print(
-        "Excluded records    : "
+        "Excluded records   : "
         f"{safe_public_path(excluded_file, repository_root)}"
     )
 
     print(
-        "Summary             : "
+        "Summary            : "
         f"{safe_public_path(summary_file, repository_root)}"
     )
 
-    print("=" * 80)
+    print(
+        "=" * 80
+    )
 
     return 0
 

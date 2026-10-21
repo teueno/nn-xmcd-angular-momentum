@@ -1,0 +1,160 @@
+{
+  "accepted_metadata_csv": "data/processed/Fe_d6/Fe_d6_accepted.csv",
+  "accepted_metadata_sha256": "e87803c4e52e0cf05260af67927082ebd0a495c35170f2db410e0f962b539729",
+  "config_file": "configs/dataset/Fe_d6.json",
+  "config_sha256": "cd19cf974c2014305514795900db0f677466f90c3a53e577d5336239ac42dca5",
+  "counts": {
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:21.395833+00:00",
+  "external_magnetic_field": {
+    "complete_consistency_check": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
+  },
+  "integrity_checks": {
+    "complete_dataset_coverage": true,
+    "cross_subset_sample_id_overlap": {
+      "train_test": 0,
+      "train_validation": 0,
+      "validation_test": 0
+    },
+    "duplicate_prefix_rows": 0,
+    "duplicate_sample_id_rows": 0,
+    "external_field_consistent_across_all_samples": true,
+    "unique_dataset_indices": true,
+    "unique_sample_ids": true
+  },
+  "output_files": {
+    "split_csv": "data/splits/Fe_d6/Fe_d6_split.csv",
+    "split_indices_npz": "data/splits/Fe_d6/Fe_d6_split_indices.npz",
+    "summary_json": "data/splits/Fe_d6/Fe_d6_split_summary.json"
+  },
+  "output_sha256": {
+    "split_csv": "90cf21f33b75c5ea2ce1f761551da32532729ea9e940a559e087b27494ea68c5",
+    "split_indices_npz": "39142a1027335f5fdba52f7eb2b84c5f050fbc039a8bd7ed0a2450d9835ce3be"
+  },
+  "prepared_dataset_npz": "data/processed/Fe_d6/Fe_d6_dataset.npz",
+  "prepared_dataset_sha256": "65841624c7fdeb30106c42517cdf185a64b8608e47a31917614dd28f585ad6e3",
+  "random_number_generator": "numpy.random.default_rng",
+  "random_seed": 1234,
+  "ratios": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "rounding_rule": {
+    "test": "N - n_train - n_validation",
+    "train": "int(train_ratio * N)",
+    "validation": "int(validation_ratio * N)"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "split_method": "random permutation without replacement",
+  "subsets": {
+    "test": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.175968,
+          "mean": -0.631414647266314,
+          "min": -0.822555,
+          "std_population": 0.18954317533595458
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.466807,
+          "mean": -1.4937108712522047,
+          "min": -1.7921,
+          "std_population": 0.4140668466432342
+        }
+      }
+    },
+    "train": {
+      "count": 2646,
+      "external_field_t": {
+        "count": 2646,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 2646,
+          "max": -0.175642,
+          "mean": -0.6231714149659864,
+          "min": -0.825645,
+          "std_population": 0.19236530664553728
+        },
+        "sz_label": {
+          "count": 2646,
+          "max": -0.466807,
+          "mean": -1.4784041507936507,
+          "min": -1.7921,
+          "std_population": 0.4213465290101717
+        }
+      }
+    },
+    "validation": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.175642,
+          "mean": -0.629945950617284,
+          "min": -0.825581,
+          "std_population": 0.19033233827431317
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.467288,
+          "mean": -1.4907971287477955,
+          "min": -1.792006,
+          "std_population": 0.4142522957713451
+        }
+      }
+    }
+  },
+  "system": {
+    "element": "Fe",
+    "n_electrons_3d": 6,
+    "name": "Fe_d6"
+  }
+}

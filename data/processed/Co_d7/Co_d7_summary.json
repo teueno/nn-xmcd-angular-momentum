@@ -1,0 +1,120 @@
+{
+  "accepted_label_summary": {
+    "Lz": {
+      "count": 3780,
+      "max": -0.161495,
+      "mean": -0.6826125333333334,
+      "min": -1.00622,
+      "std_population": 0.22745714666889855
+    },
+    "Sz": {
+      "count": 3780,
+      "max": -0.246448,
+      "mean": -0.8660043626984126,
+      "min": -1.127053,
+      "std_population": 0.2603875447707769
+    }
+  },
+  "arrays": {
+    "X_dtype": "float64",
+    "X_shape": [
+      3780,
+      4002
+    ],
+    "Y_dtype": "float64",
+    "Y_shape": [
+      3780,
+      2
+    ],
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "config_file": "configs/dataset/Co_d7.json",
+  "config_sha256": "e854b1c19cf9904de118e02f8b157519d64af44419c3310f37102147b9c97803",
+  "counts": {
+    "accepted": 3780,
+    "excluded": 0,
+    "source_rows": 3780
+  },
+  "created_at_utc": "2026-10-20T02:40:46.619607+00:00",
+  "exclusion_reason_counts": {},
+  "external_magnetic_field": {
+    "accepted_field_summary_t": {
+      "count": 3780,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "field_column": "B_ext_T",
+    "field_tolerance_t": 1e-09,
+    "hamiltonian_term": "mu_B * B_ext * (g_L * Lz + g_S * Sz)",
+    "is_model_input": false,
+    "magnitude_t": 2.0
+  },
+  "output_files": {
+    "accepted_csv": "data/processed/Co_d7/Co_d7_accepted.csv",
+    "dataset_npz": "data/processed/Co_d7/Co_d7_dataset.npz",
+    "excluded_csv": "data/processed/Co_d7/Co_d7_excluded.csv",
+    "metadata_csv": "data/processed/Co_d7/Co_d7_metadata.csv",
+    "summary_json": "data/processed/Co_d7/Co_d7_summary.json"
+  },
+  "output_sha256": {
+    "accepted_csv": "ae88320b29f1f69a0058e57edc977104ebc68199d91ab3b0af7c2ca60beccd8b",
+    "dataset_npz": "4ed1a1bc81746f76b629fa772d6ed8173ff498d09c0c23cae5b396b88b5f09b4",
+    "excluded_csv": "30327eb1200e28b1ab2f2958f45a0c84e59d95c49a3756fa8ce32d5f79c725e5",
+    "metadata_csv": "ae88320b29f1f69a0058e57edc977104ebc68199d91ab3b0af7c2ca60beccd8b"
+  },
+  "selection": {
+    "criterion": "abs(Sz) < tolerance and abs(Lz) < tolerance",
+    "exclude_both_moments_zero": false,
+    "zero_tolerance": 1e-06
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_results_csv": "quanty/runs/Co_d7/metadata/quanty_results_Co_d7.csv",
+  "source_results_csv_sha256": "7a6c483708a7f8bff429c8aed15bcf2d3bfef62acbc039cb5b8d9a6729f4157f",
+  "spec_directory": "quanty/runs/Co_d7/spec",
+  "spectrum_settings": {
+    "energy_atol": 1e-12,
+    "energy_column": 0,
+    "energy_rtol": 1e-10,
+    "require_equal_length": true,
+    "require_same_energy_grid": true,
+    "skip_header": 4,
+    "value_column": 2,
+    "xas_definition": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd_definition": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "system": {
+    "element": "Co",
+    "n_electrons_3d": 7,
+    "name": "Co_d7"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "accepted_metadata_csv": "data/processed/Ni_d8/Ni_d8_accepted.csv",
+  "accepted_metadata_sha256": "fa426b152137d7b44f892ed64890ca5e13149ba738b67cab2e21fdde02e7c0f3",
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "7d678fcef0b0513df6f3291694dc5926478712adbb5f12c0c52fa24608dd1ff0",
+  "counts": {
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:46.226862+00:00",
+  "external_magnetic_field": {
+    "complete_consistency_check": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "magnitude_t": 2.0,
+    "tolerance_t": 1e-09
+  },
+  "integrity_checks": {
+    "complete_dataset_coverage": true,
+    "cross_subset_sample_id_overlap": {
+      "train_test": 0,
+      "train_validation": 0,
+      "validation_test": 0
+    },
+    "duplicate_prefix_rows": 0,
+    "duplicate_sample_id_rows": 0,
+    "external_field_consistent_across_all_samples": true,
+    "unique_dataset_indices": true,
+    "unique_sample_ids": true
+  },
+  "output_files": {
+    "split_csv": "data/splits/Ni_d8/Ni_d8_split.csv",
+    "split_indices_npz": "data/splits/Ni_d8/Ni_d8_split_indices.npz",
+    "summary_json": "data/splits/Ni_d8/Ni_d8_split_summary.json"
+  },
+  "output_sha256": {
+    "split_csv": "4fb89f16075286c079f69679bca3d0d0095e9ed682e369e4bcc88b0c0e972641",
+    "split_indices_npz": "f202188800687d8c0a9b8b23e6cbe0472f8ba18af2e23cfff52e068c800a8096"
+  },
+  "prepared_dataset_npz": "data/processed/Ni_d8/Ni_d8_dataset.npz",
+  "prepared_dataset_sha256": "e6dd5582b6b74ea85fd8b184ed67c0e6c1277b3c354541d668fc45cd39960c63",
+  "random_number_generator": "numpy.random.default_rng",
+  "random_seed": 1234,
+  "ratios": {
+    "test": 0.15,
+    "train": 0.7,
+    "validation": 0.15
+  },
+  "rounding_rule": {
+    "test": "N - n_train - n_validation",
+    "train": "int(train_ratio * N)",
+    "validation": "int(validation_ratio * N)"
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "split_method": "random permutation without replacement",
+  "subsets": {
+    "test": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.027557,
+          "mean": -0.23879742151675484,
+          "min": -0.500642,
+          "std_population": 0.10379046834876936
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.188757,
+          "mean": -0.8678785749559084,
+          "min": -0.998527,
+          "std_population": 0.2702785594685659
+        }
+      }
+    },
+    "train": {
+      "count": 2646,
+      "external_field_t": {
+        "count": 2646,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 2646,
+          "max": -0.027551,
+          "mean": -0.24360286507936507,
+          "min": -0.500642,
+          "std_population": 0.10813232073925727
+        },
+        "sz_label": {
+          "count": 2646,
+          "max": -0.188741,
+          "mean": -0.8590559773242631,
+          "min": -0.998527,
+          "std_population": 0.27484409013973626
+        }
+      }
+    },
+    "validation": {
+      "count": 567,
+      "external_field_t": {
+        "count": 567,
+        "max": 2.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "std_population": 0.0
+      },
+      "targets": {
+        "lz_label": {
+          "count": 567,
+          "max": -0.027557,
+          "mean": -0.2404699700176367,
+          "min": -0.50059,
+          "std_population": 0.10266815063871589
+        },
+        "sz_label": {
+          "count": 567,
+          "max": -0.188757,
+          "mean": -0.864938848324515,
+          "min": -0.998497,
+          "std_population": 0.2690470548229391
+        }
+      }
+    }
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  }
+}

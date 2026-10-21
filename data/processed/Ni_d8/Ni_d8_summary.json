@@ -1,0 +1,120 @@
+{
+  "accepted_label_summary": {
+    "Lz": {
+      "count": 3780,
+      "max": -0.027551,
+      "mean": -0.2424121142857143,
+      "min": -0.500642,
+      "std_population": 0.106702009979698
+    },
+    "Sz": {
+      "count": 3780,
+      "max": -0.188741,
+      "mean": -0.8612617976190476,
+      "min": -0.998527,
+      "std_population": 0.2733221828698984
+    }
+  },
+  "arrays": {
+    "X_dtype": "float64",
+    "X_shape": [
+      3780,
+      4002
+    ],
+    "Y_dtype": "float64",
+    "Y_shape": [
+      3780,
+      2
+    ],
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "config_file": "configs/dataset/Ni_d8.json",
+  "config_sha256": "7d678fcef0b0513df6f3291694dc5926478712adbb5f12c0c52fa24608dd1ff0",
+  "counts": {
+    "accepted": 3780,
+    "excluded": 0,
+    "source_rows": 3780
+  },
+  "created_at_utc": "2026-10-20T02:41:25.255398+00:00",
+  "exclusion_reason_counts": {},
+  "external_magnetic_field": {
+    "accepted_field_summary_t": {
+      "count": 3780,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "field_column": "B_ext_T",
+    "field_tolerance_t": 1e-09,
+    "hamiltonian_term": "mu_B * B_ext * (g_L * Lz + g_S * Sz)",
+    "is_model_input": false,
+    "magnitude_t": 2.0
+  },
+  "output_files": {
+    "accepted_csv": "data/processed/Ni_d8/Ni_d8_accepted.csv",
+    "dataset_npz": "data/processed/Ni_d8/Ni_d8_dataset.npz",
+    "excluded_csv": "data/processed/Ni_d8/Ni_d8_excluded.csv",
+    "metadata_csv": "data/processed/Ni_d8/Ni_d8_metadata.csv",
+    "summary_json": "data/processed/Ni_d8/Ni_d8_summary.json"
+  },
+  "output_sha256": {
+    "accepted_csv": "fa426b152137d7b44f892ed64890ca5e13149ba738b67cab2e21fdde02e7c0f3",
+    "dataset_npz": "e6dd5582b6b74ea85fd8b184ed67c0e6c1277b3c354541d668fc45cd39960c63",
+    "excluded_csv": "30327eb1200e28b1ab2f2958f45a0c84e59d95c49a3756fa8ce32d5f79c725e5",
+    "metadata_csv": "fa426b152137d7b44f892ed64890ca5e13149ba738b67cab2e21fdde02e7c0f3"
+  },
+  "selection": {
+    "criterion": "abs(Sz) < tolerance and abs(Lz) < tolerance",
+    "exclude_both_moments_zero": false,
+    "zero_tolerance": 1e-06
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_results_csv": "quanty/runs/Ni_d8/metadata/quanty_results_Ni_d8.csv",
+  "source_results_csv_sha256": "55e20c8ffb9e3e98fa69b887365e69b54ef95fd0b9300e91c7abb1c44007ceee",
+  "spec_directory": "quanty/runs/Ni_d8/spec",
+  "spectrum_settings": {
+    "energy_atol": 1e-12,
+    "energy_column": 0,
+    "energy_rtol": 1e-10,
+    "require_equal_length": true,
+    "require_same_energy_grid": true,
+    "skip_header": 4,
+    "value_column": 2,
+    "xas_definition": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd_definition": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "system": {
+    "element": "Ni",
+    "n_electrons_3d": 8,
+    "name": "Ni_d8"
+  }
+}

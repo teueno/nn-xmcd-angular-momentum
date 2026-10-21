@@ -8,17 +8,39 @@
   "paths": {
     "repository_root": "../..",
 
-    "preprocessed_dataset_npz": "../../data/preprocessed/Co_d7_preprocessed.npz",
+    "preprocessed_dataset_npz": "../../data/preprocessed/Co_d7/Co_d7_preprocessed.npz",
 
-    "scalers_npz": "../../data/preprocessed/Co_d7_scalers.npz",
+    "scalers_npz": "../../data/preprocessed/Co_d7/Co_d7_scalers.npz",
 
-    "accepted_metadata_csv": "../../data/processed/Co_d7_accepted.csv",
+    "accepted_metadata_csv": "../../data/processed/Co_d7/Co_d7_accepted.csv",
 
     "model_output_directory": "../../models/Co_d7",
 
     "selected_model_checkpoint": "../../models/Co_d7/selected_model.pt",
 
     "result_output_directory": "../../results/Co_d7"
+  },
+
+  "spectrum": {
+    "xas_right_suffix": "_r.spec",
+
+    "xas_left_suffix": "_l.spec",
+
+    "xmcd_suffix": "_cd.spec"
+  },
+
+  "external_magnetic_field": {
+    "enabled": true,
+
+    "magnitude_t": 2.0,
+
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+
+    "tolerance_t": 1e-9
   },
 
   "model": {
@@ -55,9 +77,11 @@
     "dtype": "float32",
 
     "cpu_threads": {
-    "num_threads": "auto",
-    "interop_threads": "auto",
-    "warn_on_oversubscription": true
+      "num_threads": 1,
+
+      "interop_threads": 1,
+
+      "warn_on_oversubscription": true
     },
 
     "optimizer": {

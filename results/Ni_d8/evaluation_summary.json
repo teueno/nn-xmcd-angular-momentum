@@ -1,21 +1,40 @@
 {
   "batch_normalization_mode": "evaluation",
-  "checkpoint_epoch": 129,
-  "checkpoint_validation_loss": 0.0027564460940567065,
-  "created_at_utc": "2026-10-15T05:56:19.016571+00:00",
+  "checkpoint_epoch": 67,
+  "checkpoint_validation_loss": 0.0017667506974210184,
+  "created_at_utc": "2026-10-19T07:14:02.513088+00:00",
   "device": "cpu",
   "dropout_active": false,
   "dtype": "float32",
   "evaluation_subset": "complete saved test subset",
+  "external_magnetic_field": {
+    "consistent_across_config_dataset_scaler_checkpoint_and_predictions": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "test_field_summary_t": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "tolerance_t": 1e-09
+  },
   "files": {
-    "accepted_metadata": "data/processed/Ni_d8_accepted.csv",
+    "accepted_metadata": "data/processed/Ni_d8/Ni_d8_accepted.csv",
     "config": "configs/training/Ni_d8.json",
     "evaluation_summary_json": "results/Ni_d8/evaluation_summary.json",
     "metrics_json": "results/Ni_d8/metrics.json",
     "predictions_csv": "results/Ni_d8/predictions.csv",
-    "preprocessed_dataset": "data/preprocessed/Ni_d8_preprocessed.npz",
+    "preprocessed_dataset": "data/preprocessed/Ni_d8/Ni_d8_preprocessed.npz",
     "residual_summary_csv": "results/Ni_d8/residual_summary.csv",
-    "scaler": "data/preprocessed/Ni_d8_scalers.npz",
+    "scaler": "data/preprocessed/Ni_d8/Ni_d8_scalers.npz",
     "selected_checkpoint": "models/Ni_d8/selected_model.pt"
   },
   "inverse_transform": "Y_physical = Y_standardized * Y_std_safe + Y_mean",
@@ -28,29 +47,29 @@
   },
   "metrics_calculated_from": "results/Ni_d8/predictions.csv",
   "model_mode": "evaluation",
-  "prediction_count": 486,
+  "prediction_count": 567,
   "sha256": {
-    "config": "3f5865ba00b935fa9f0e4839911c281fcb4768e2b2065d6aa8d192e2481c61e8",
-    "metrics_json": "f0d2818d866bf1fb1f48b79472d987e91e0254d7c716662895f84a07dfc4394b",
-    "predictions_csv": "e8a86962ccb0cab57cec95850355c559c3c2dfdb8050cb3ab02f7ae382143d56",
-    "preprocessed_dataset": "5bf5a0030108b16af9895de5208e04efbf7b2127526c12acd77bbc3d055615d4",
-    "residual_summary_csv": "f250ad2fdb4bd5d90e3c78e653b6b893c27a4b81fc6601eb3d4457b63a9177be",
-    "scaler": "6508a457806988ff2bfb068800d5217f4fbda368e15f12d9bd473f6113ec5231",
-    "selected_checkpoint": "fd9261f5fbda5b5a382b66d58a70163117c8a7002b6b70c39eb5d6ab1fdd68c7"
+    "config": "d2e071c928acb32c8f2dc4351299ce31095318f6f772862e102e750dedf924d7",
+    "metrics_json": "8e3db877bef4b67f9394f93c618a987e9e801a22ca203da0836fd2e806c14f04",
+    "predictions_csv": "76bd07643fae64a0ec028ffe75cdc48eea211ba5e34a22fc967123e532638708",
+    "preprocessed_dataset": "17b6ed77dcba8e639e0ce07c2115f36621582e025abb593d3099a3e953cf2643",
+    "residual_summary_csv": "32e772c15547aeaa7b373528bbe574d343f424c25e7b496e09deb38f6ea04261",
+    "scaler": "eee7d0831534485c2d180430924afc3c6b243cd2131beaf1ef014ec2cdce233d",
+    "selected_checkpoint": "a7534c1146bbfccba494067df68d28a681eaaa9cd99df98143a00df07042e6aa"
   },
   "software": {
     "cuda_available": false,
-    "cuda_version": "12.4",
+    "cuda_version": "13.0",
     "cudnn_available": true,
-    "cudnn_version": 90100,
+    "cudnn_version": 92400,
     "machine": "x86_64",
     "mps_available": false,
     "numpy": "2.4.6",
-    "pandas": "3.0.6",
-    "platform": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "pandas": "2.3.3",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
     "python": "3.11.17",
     "python_implementation": "CPython",
-    "torch": "2.5.1"
+    "torch": "2.14.1+cu130"
   },
   "system": {
     "element": "Ni",

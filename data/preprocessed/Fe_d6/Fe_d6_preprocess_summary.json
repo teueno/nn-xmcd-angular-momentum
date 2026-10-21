@@ -1,0 +1,316 @@
+{
+  "config_file": "configs/dataset/Fe_d6.json",
+  "config_sha256": "cd19cf974c2014305514795900db0f677466f90c3a53e577d5336239ac42dca5",
+  "constant_or_near_constant_features": {
+    "targets_below_epsilon": 0,
+    "xas_below_epsilon": 0,
+    "xmcd_below_epsilon": 0
+  },
+  "counts": {
+    "n_total_features": 4002,
+    "n_xas_features": 2001,
+    "n_xmcd_features": 2001,
+    "test": 567,
+    "total": 3780,
+    "train": 2646,
+    "validation": 567
+  },
+  "created_at_utc": "2026-10-20T02:42:31.758461+00:00",
+  "external_magnetic_field": {
+    "consistent_across_config_dataset_and_split": true,
+    "direction": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "enabled": true,
+    "is_model_input": false,
+    "magnitude_t": 2.0,
+    "test": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "tolerance_t": 1e-09,
+    "train": {
+      "count": 2646,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    },
+    "validation": {
+      "count": 567,
+      "max": 2.0,
+      "mean": 2.0,
+      "min": 2.0,
+      "std_population": 0.0
+    }
+  },
+  "method": {
+    "channel_order": "XAS followed by XMCD",
+    "epsilon": 1e-06,
+    "feature_axis": "energy point within each channel",
+    "fit_statistics_on": "training_only",
+    "input_mode": "channel_wise_feature_standardization",
+    "nonfinite_policy": "error",
+    "population_standard_deviation_ddof": 0,
+    "small_std_replacement": 1.0,
+    "split_seed": 1234,
+    "standardize_inputs": true,
+    "standardize_targets": true,
+    "target_order": [
+      "Sz",
+      "Lz"
+    ]
+  },
+  "nonfinite_replacements": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "output_files": {
+    "preprocessed_npz": "data/preprocessed/Fe_d6/Fe_d6_preprocessed.npz",
+    "scalers_npz": "data/preprocessed/Fe_d6/Fe_d6_scalers.npz",
+    "summary_json": "data/preprocessed/Fe_d6/Fe_d6_preprocess_summary.json"
+  },
+  "output_sha256": {
+    "preprocessed_npz": "63a1bb37a7be612d29941367e91b6e4845b3f686d91490e734c941adc053e56c",
+    "scalers_npz": "9c8b254b24caefa290a813cf55ca814f56af3b4e775ccd87b196313de1b6ea90"
+  },
+  "prepared_dataset_npz": "data/processed/Fe_d6/Fe_d6_dataset.npz",
+  "prepared_dataset_sha256": "65841624c7fdeb30106c42517cdf185a64b8608e47a31917614dd28f585ad6e3",
+  "raw_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": -0.175968,
+        "mean": -0.6314146472663139,
+        "min": -0.822555,
+        "std_population": 0.18954317533595458
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.466807,
+        "mean": -1.4937108712522045,
+        "min": -1.7921,
+        "std_population": 0.4140668466432342
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": -0.175642,
+        "mean": -0.6231714149659864,
+        "min": -0.825645,
+        "std_population": 0.19236530664553728
+      },
+      "Sz": {
+        "count": 2646,
+        "max": -0.466807,
+        "mean": -1.4784041507936507,
+        "min": -1.7921,
+        "std_population": 0.4213465290101717
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": -0.175642,
+        "mean": -0.629945950617284,
+        "min": -0.825581,
+        "std_population": 0.19033233827431317
+      },
+      "Sz": {
+        "count": 567,
+        "max": -0.467288,
+        "mean": -1.4907971287477955,
+        "min": -1.792006,
+        "std_population": 0.4142522957713451
+      }
+    }
+  },
+  "software": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
+    "python_implementation": "CPython",
+    "torch": "2.5.1"
+  },
+  "source_nonfinite_values": {
+    "input_values": 0,
+    "target_values": 0
+  },
+  "spectrum_definitions": {
+    "feature_order": "[XAS channels, XMCD channels]",
+    "n_xas": 2001,
+    "n_xmcd": 2001,
+    "validated_against_prepared_dataset": true,
+    "xas": "(I_r + I_l) / 2",
+    "xas_left_suffix": "_l.spec",
+    "xas_right_suffix": "_r.spec",
+    "xmcd": "I_r - I_l",
+    "xmcd_suffix": "_cd.spec"
+  },
+  "split_indices_npz": "data/splits/Fe_d6/Fe_d6_split_indices.npz",
+  "split_indices_sha256": "39142a1027335f5fdba52f7eb2b84c5f050fbc039a8bd7ed0a2450d9835ce3be",
+  "standardized_array_summary": {
+    "X_test": {
+      "dtype": "float64",
+      "max": 6.664090112463616,
+      "mean": 0.013791718009097696,
+      "min": -4.7410402661356805,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.02765177286879
+    },
+    "X_train": {
+      "dtype": "float64",
+      "max": 7.261650655434682,
+      "mean": -6.97841220348352e-20,
+      "min": -4.621664637195624,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        4002
+      ],
+      "std_population": 0.9999999999999991
+    },
+    "X_validation": {
+      "dtype": "float64",
+      "max": 6.949385665131514,
+      "mean": 0.0011612512790430294,
+      "min": -4.610593588889708,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        4002
+      ],
+      "std_population": 1.0196268099174268
+    },
+    "Y_test": {
+      "dtype": "float64",
+      "max": 2.4008674123175973,
+      "mean": -0.039590036792470536,
+      "min": -1.0364841171771706,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.9840323326675254
+    },
+    "Y_train": {
+      "dtype": "float64",
+      "max": 2.4008674123175973,
+      "mean": -2.8625795779299577e-15,
+      "min": -1.0525473047336136,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        2646,
+        2
+      ],
+      "std_population": 1.0000000000000002
+    },
+    "Y_validation": {
+      "dtype": "float64",
+      "max": 2.399725834146466,
+      "mean": -0.03231491343936416,
+      "min": -1.05221460440882,
+      "nan_count": 0,
+      "negative_inf_count": 0,
+      "positive_inf_count": 0,
+      "shape": [
+        567,
+        2
+      ],
+      "std_population": 0.9863065896116118
+    }
+  },
+  "standardized_target_summary": {
+    "test": {
+      "Lz": {
+        "count": 567,
+        "max": 2.324761272000185,
+        "mean": -0.04285196974482851,
+        "min": -1.0364841171771706,
+        "std_population": 0.9853293124483054
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.4008674123175973,
+        "mean": -0.036328103840112605,
+        "min": -0.7445079705374175,
+        "std_population": 0.9827228139649357
+      }
+    },
+    "train": {
+      "Lz": {
+        "count": 2646,
+        "max": 2.326455964279603,
+        "mean": -8.722006068589589e-15,
+        "min": -1.0525473047336136,
+        "std_population": 1.0000000000000004
+      },
+      "Sz": {
+        "count": 2646,
+        "max": 2.4008674123175973,
+        "mean": 2.9995322594256687e-15,
+        "min": -0.7445079705374175,
+        "std_population": 1.0000000000000002
+      }
+    },
+    "validation": {
+      "Lz": {
+        "count": 567,
+        "max": 2.326455964279603,
+        "mean": -0.03521703455489696,
+        "min": -1.05221460440882,
+        "std_population": 0.9894317306656023
+      },
+      "Sz": {
+        "count": 567,
+        "max": 2.399725834146466,
+        "mean": -0.02941279232383134,
+        "min": -0.7442848762586516,
+        "std_population": 0.9831629484275276
+      }
+    }
+  },
+  "system": {
+    "element": "Fe",
+    "n_electrons_3d": 6,
+    "name": "Fe_d6"
+  },
+  "training_transform_checks": {
+    "maximum_absolute_training_feature_mean": 1.2317899283090837e-13,
+    "training_target_mean": [
+      3.035826398363717e-15,
+      -8.752646293976306e-15
+    ],
+    "training_target_std_population": [
+      1.0000000000000002,
+      0.9999999999999997
+    ]
+  }
+}
