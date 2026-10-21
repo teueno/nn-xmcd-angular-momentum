@@ -17,7 +17,7 @@ If you use this software, please cite both the software repository and the assoc
 
 Software DOI
 
-https://doi.org/10.5281/zenodo.23409837
+https://doi.org/10.5281/zenodo.23529340
 
 Repository
 
@@ -141,7 +141,7 @@ These files include:
 
 The source code, configuration files, notebooks, valuation results, and metadata required to reproduce the workflow are included in this repository.
 
-Large datasets, spectra, and trained models are archived separately through Zenodo (https://doi.org/10.5281/zenodo.23409837).
+Large datasets, spectra, and trained models are archived separately through Zenodo (https://doi.org/10.5281/zenodo.23529340).
 
 
 # Installation
