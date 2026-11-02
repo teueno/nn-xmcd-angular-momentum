@@ -17,7 +17,7 @@ If you use this software, please cite both the software repository and the assoc
 
 Software DOI
 
-https://doi.org/10.5281/zenodo.23529340
+https://doi.org/10.5281/zenodo.23899417
 
 Repository
 
