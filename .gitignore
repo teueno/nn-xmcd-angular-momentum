@@ -91,3 +91,20 @@ models/**/*.pth
 # ============================================================
 
 notebooks/.cache/
+# Large generated NumPy datasets
+data/processed/
+data/preprocessed/
+data/splits/
+
+# Local Zenodo staging directory
+zenode/
+zenodo/
+
+# Large generated NumPy datasets
+data/processed/**/*.npz
+data/preprocessed/**/*.npz
+data/splits/**/*.npz
+
+# Local Zenodo staging directories
+zenode/
+zenodo/

@@ -1,31 +1,12 @@
 {
   "batch_normalization_mode": "evaluation",
-  "checkpoint_epoch": 67,
-  "checkpoint_validation_loss": 0.0018797805779194705,
-  "created_at_utc": "2026-10-19T07:13:51.567656+00:00",
+  "checkpoint_epoch": 88,
+  "checkpoint_validation_loss": 0.001901546732984102,
+  "created_at_utc": "2026-11-02T21:56:12.311312+00:00",
   "device": "cpu",
   "dropout_active": false,
   "dtype": "float32",
   "evaluation_subset": "complete saved test subset",
-  "external_magnetic_field": {
-    "consistent_across_config_dataset_scaler_checkpoint_and_predictions": true,
-    "direction": [
-      0.0,
-      0.0,
-      1.0
-    ],
-    "enabled": true,
-    "is_model_input": false,
-    "magnitude_t": 2.0,
-    "test_field_summary_t": {
-      "count": 567,
-      "max": 2.0,
-      "mean": 2.0,
-      "min": 2.0,
-      "std_population": 0.0
-    },
-    "tolerance_t": 1e-09
-  },
   "files": {
     "accepted_metadata": "data/processed/Co_d7/Co_d7_accepted.csv",
     "config": "configs/training/Co_d7.json",
@@ -49,27 +30,27 @@
   "model_mode": "evaluation",
   "prediction_count": 567,
   "sha256": {
-    "config": "efdfd9c4f5372d832dfda6582de2028f15a0c137acbec00decd2ee1500bb1e4a",
-    "metrics_json": "0c7604dbc457975d4f1a415a522dc1b4e8511161b77dc4b521ecc4be9ea36a52",
-    "predictions_csv": "d1b6c4f4a4d71e42e529ad0548b8a26f7dd50a0b988d2f3ad396809dad298595",
-    "preprocessed_dataset": "f7ac9d3521756a1a3c695445e33af6a8173255d95e86fcbe87c59e5387c3132b",
-    "residual_summary_csv": "74ac05a2756e1108939a12aa8f05b34c57fee2c0c37050b8e82b1d7ccd11f7de",
-    "scaler": "dd01b656cf3dee4e4a59fe037033b998d1008db80c2abfd5dad582d0fc7aa470",
-    "selected_checkpoint": "db0ed52102a7d8dc14a683ae05c1cbcea912d7c2d05ffb93842c6b3fa171e590"
+    "config": "a88e53808818041b2bb1991177bd3cc4b3b79f5cbca25d09e757c30dca130d4d",
+    "metrics_json": "3d65d34508ce96ffd15aa98a5470a1d9430ee188eba0ddca7cedd1708f4c0604",
+    "predictions_csv": "60cd854e64a8f25b7cda708220ba90a234386f90e243adcac08f5227adefa8ea",
+    "preprocessed_dataset": "7ca8bafce56e226199976eaf9fd9cdd05664cf71e936463ee79d9d4eed767799",
+    "residual_summary_csv": "d4979aee7e08d07c90f0a9709cfc99092d4242c1e045957a87c474c43eaa42fc",
+    "scaler": "61383f7d916f2d48b547afe30672e7fcc78eea4fee32ddf869152e27b7c83430",
+    "selected_checkpoint": "dc6c7e5a80c40a033dc05fb3e1f4116990d3c55118a1d2d77fb59fc5a2269690"
   },
   "software": {
     "cuda_available": false,
-    "cuda_version": "13.0",
-    "cudnn_available": true,
-    "cudnn_version": 92400,
-    "machine": "x86_64",
-    "mps_available": false,
-    "numpy": "2.4.6",
-    "pandas": "2.3.3",
-    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
-    "python": "3.11.17",
+    "cuda_version": null,
+    "cudnn_available": false,
+    "cudnn_version": null,
+    "machine": "arm64",
+    "mps_available": true,
+    "numpy": "2.2.5",
+    "pandas": "2.2.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.8",
     "python_implementation": "CPython",
-    "torch": "2.14.1+cu130"
+    "torch": "2.5.1"
   },
   "system": {
     "element": "Co",
